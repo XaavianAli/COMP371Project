@@ -1,0 +1,8 @@
+﻿  A2_team4.cpp
+  The contents of <filesystem> are available only with C++17 or later.
+D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\shader.h(42,40): warning C4101: 'e': unreferenced local variable
+D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(318,22): warning C4018: '<': signed/unsigned mismatch
+D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(476,21): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(626,24): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(642,22): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+  Labs.vcxproj -> D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Bin\Labs-Debug.exe
