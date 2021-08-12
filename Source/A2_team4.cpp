@@ -71,6 +71,12 @@ bool useShadows = false;
 GLuint brickTextureID;
 GLuint metalTextureID;
 GLuint tileTextureID;
+GLuint skyboxBack;
+GLuint skyboxBottom;
+GLuint skyboxFront;
+GLuint skyboxLeft;
+GLuint skyboxRight;
+GLuint skyboxTop;
 
 // Shape transformations
 float translateShapeX = 0.0f;
@@ -135,18 +141,18 @@ GLuint createCubeVao() // Taken from lab and modified
 		-0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 0.0f,
 
 
-			- 0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 0.0f, 0.0f,//Background
-		 0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 20.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 20.0f, 20.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 20.0f, 20.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 0.0f, 20.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 0.0f, 0.0f,//Background
+		 0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 1.0f, 0.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 0.0f, 1.0f,
 		-0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 0.0f, 0.0f,
 
-			- 0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 20.0f, //Floor
-		 0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f,  20.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 20.0f, 20.0f,
-		 0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f,  20.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f,  0.0f, 20.0f,
+		-0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 1.0f, //Floor
+		 0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
+		 0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
+		-0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 1.0f,
 		-0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 0.0f
 	};
 
@@ -623,7 +629,7 @@ void processInput(GLFWwindow* window)
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS) 
 	{
 		mouseYChange *= sensitivity;
-		pitch += mouseYChange;
+		pitch -= mouseYChange;
 
 		if (pitch > 89.0f)
 			pitch = 89.0f;
@@ -697,10 +703,22 @@ int main(int argc, char* argv[])
 	brickTextureID = loadTexture("Textures/brick.jpg");
 	metalTextureID = loadTexture("Textures/metal.jpg");
 	tileTextureID = loadTexture("Textures/tile.png");
+	skyboxBack = loadTexture("Textures/SkyBoxBack.png");
+	skyboxBottom = loadTexture("Textures/SkyBoxBottom.png");
+	skyboxFront = loadTexture("Textures/SkyBoxFront.png");
+	skyboxLeft = loadTexture("Textures/SkyBoxLeft.png");
+	skyboxRight = loadTexture("Textures/SkyBoxRight.png");
+	skyboxTop = loadTexture("Textures/SkyBoxTop.png");
 #else
 	brickTextureID = loadTexture("../Assets/Textures/brick.jpg");
 	metalTextureID = loadTexture("../Assets/Textures/metal.jpg");
 	tileTextureID = loadTexture("../Assets/Textures/tile.png");
+	skyboxBack = loadTexture("../Assets/Textures/SkyBoxBack.png");
+	skyboxBottom = loadTexture("../Assets/Textures/SkyBoxBottom.png");
+	skyboxFront = loadTexture("../Assets/Textures/SkyBoxFront.png");
+	skyboxLeft = loadTexture("../Assets/Textures/SkyBoxLeft.png");
+	skyboxRight = loadTexture("../Assets/Textures/SkyBoxRight.png");
+	skyboxTop = loadTexture("../Assets/Textures/SkyBoxTop.png");
 #endif
 	glEnable(GL_CULL_FACE);
 
@@ -748,6 +766,18 @@ int main(int argc, char* argv[])
 		lastMousePosX = mousePosX;
 		lastMousePosY = mousePosY;
 
+		mouseYChange *= sensitivity;
+		pitch -= mouseYChange;
+
+		if (pitch > 89.0f)
+			pitch = 89.0f;
+		if (pitch < -89.0f)
+			pitch = -89.0f;
+
+		mouseXChange *= sensitivity;
+		yaw += mouseXChange;
+		glm::vec3 direction;
+
 		// Processing input
 		processInput(window);
 		
@@ -792,14 +822,14 @@ int main(int argc, char* argv[])
 		mainShader.setBool("useTextures", true);
 
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, tileTextureID);
+		glBindTexture(GL_TEXTURE_2D, skyboxFront);
 		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		displayFloor(mainShader);
 
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, brickTextureID);
+		glBindTexture(GL_TEXTURE_2D, skyboxBottom);
 		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
