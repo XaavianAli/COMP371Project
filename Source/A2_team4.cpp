@@ -15,8 +15,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h" //image loading library from https://github.com/nothings/stb
 
-using namespace std;
-GLuint loadTexture(const char *filename);
+int counter = 0;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -87,6 +86,9 @@ float rotateShapeX = 0.0f;
 float rotateShapeY = 0.0f;
 float rotateShapeZ = 0.0f;
 std::vector<glm::vec3> shapePositions;
+std::vector<glm::vec3> wallPositions;
+std::vector<glm::vec3> wallBounds;
+int numberOfCubesInWall = 7;
 
 // To only rotate once 
 bool rotateShape = false;
@@ -228,7 +230,327 @@ void buildMatrices(Shader shader)
 	shader.setMat4("projection", projection);
 }
 
-glm::vec3 determineNextPosition(glm::vec3 currentPosition, std::vector<glm::vec3> processedPositions, std::vector<glm::vec3> bounds, int boundsLength)
+bool boundsAreSymmetric(std::vector<glm::vec3> wallBounds)
+{
+	std::vector<glm::vec3> translatedBounds;
+	glm::vec3 selectedBound = wallBounds[0];
+	for (int i = 0; i < wallBounds.size(); i++)
+	{
+		if (wallBounds[i].x < selectedBound.x || wallBounds[i].x == selectedBound.x && wallBounds[i].y < selectedBound.y)
+			selectedBound = wallBounds[i];
+	}
+
+	for (int i = 0; i < wallBounds.size(); i++)
+	{
+		translatedBounds.push_back(wallBounds[i] - selectedBound);
+	}
+
+	std::vector<std::vector<glm::vec3>> symmetricBoundsSizeFive =
+	{
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(1.0f, -2.0f, 0.0f),
+			glm::vec3(2.0f, -2.0f, 0.0f)
+		}
+	};
+	std::vector<std::vector<glm::vec3>> symmetricBoundsSizeSix =
+	{
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 3.0f, 0.0f),
+			glm::vec3(2.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(1.0f, -2.0f, 0.0f),
+			glm::vec3(1.0f, -3.0f, 0.0f),
+			glm::vec3(2.0f, -3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 3.0f, 0.0f),
+			glm::vec3(0.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 3.0f, 0.0f),
+			glm::vec3(1.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 3.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f)
+		}
+	};
+	std::vector<std::vector<glm::vec3>> symmetricBoundsSizeSeven =
+	{
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f)
+		}
+	};
+
+	std::vector<std::vector<glm::vec3>> symmetricBounds;
+	switch (wallBounds.size())
+	{
+	case 5:
+		symmetricBounds = symmetricBoundsSizeFive;
+		break;
+	case 6:
+		symmetricBounds = symmetricBoundsSizeSix;
+		break;
+	case 7:
+		symmetricBounds = symmetricBoundsSizeSeven;
+		break;
+	}
+
+	for (int i = 0; i < symmetricBounds.size(); i++)
+	{
+		std::sort(symmetricBounds[i].begin(), symmetricBounds[i].end(),
+			[](const glm::vec3& lhs, const glm::vec3& rhs)
+			{
+				if (lhs.x == rhs.x)
+				{
+					if (lhs.y == rhs.y)
+						return lhs.z < rhs.z;
+
+					return lhs.y < rhs.y;
+				}
+
+				return lhs.x < rhs.x;
+			});
+	}
+
+	std::sort(translatedBounds.begin(), translatedBounds.end(),
+		[](const glm::vec3& lhs, const glm::vec3& rhs)
+		{
+			if (lhs.x == rhs.x)
+			{
+				if (lhs.y == rhs.y)
+					return lhs.z < rhs.z;
+
+				return lhs.y < rhs.y;
+			}
+
+			return lhs.x < rhs.x;
+		});
+
+	bool symmetryFound = false;
+	for (int i = 0; i < symmetricBounds.size(); i++)
+	{
+		if (symmetricBounds[i] == translatedBounds)
+			symmetryFound = true;
+	}
+
+	return symmetryFound;
+}
+
+glm::vec3 determineNextPosition(glm::vec3 currentPosition, std::vector<glm::vec3> processedPositions, std::vector<glm::vec3> bounds, bool forMainShape)
 {
 	glm::vec3 nextPosition;
 	bool timeToBreak = false;
@@ -236,20 +558,24 @@ glm::vec3 determineNextPosition(glm::vec3 currentPosition, std::vector<glm::vec3
 
 	while (true)
 	{
-		glm::vec3 relativePositions[] =
+		std::vector<glm::vec3> relativePositions =
 		{
 			glm::vec3(1.0f, 0.0f, 0.0f),
 			glm::vec3(-1.0f, 0.0f, 0.0f),
 			glm::vec3(0.0f, 1.0f, 0.0f),
-			glm::vec3(0.0f, -1.0f, 0.0f),
-			glm::vec3(0.0f, 0.0f, 1.0f),
-			glm::vec3(0.0f, 0.0f, -1.0f),
+			glm::vec3(0.0f, -1.0f, 0.0f)
 		};
 
-		int randomIndex = rand() % 6;
+		if (forMainShape)
+		{
+			relativePositions.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+			relativePositions.push_back(glm::vec3(0.0f, 0.0f, -1.0f));
+		}
+
+		int randomIndex = rand() % relativePositions.size();
 		glm::vec3 relativePosition = relativePositions[randomIndex];
 
-		for (int i = 0; i < boundsLength; i++)
+		for (int i = 0; i < bounds.size(); i++)
 		{
 			if (currentPosition.x + relativePosition.x == bounds[i].x && currentPosition.y + relativePosition.y == bounds[i].y)
 			{
@@ -279,20 +605,8 @@ glm::vec3 determineNextPosition(glm::vec3 currentPosition, std::vector<glm::vec3
 	return nextPosition;
 }
 
-std::vector<glm::vec3> randomize()
+std::vector<glm::vec3> randomizeShape()
 {
-	int length = 7;
-	std::vector<glm::vec3> bounds =
-	{
-		glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(1.0f, 0.0f, 0.0f),
-		glm::vec3(0.0f, 1.0f, 0.0f),
-		glm::vec3(1.0f, 1.0f, 0.0f),
-		glm::vec3(2.0f, 1.0f, 0.0f),
-		glm::vec3(3.0f, 1.0f, 0.0f),
-		glm::vec3(3.0f, 2.0f, 0.0f)
-	};
-
 	std::vector<glm::vec3> randomPos;
 	bool coveringAllBounds;
 
@@ -301,13 +615,13 @@ std::vector<glm::vec3> randomize()
 		coveringAllBounds = true;
 		randomPos.clear();
 
-		int randomIndex = rand() % length;
-		glm::vec3 currentPosition = bounds[randomIndex];
+		int randomIndex = rand() % wallBounds.size();
+		glm::vec3 currentPosition = wallBounds[randomIndex];
 		randomPos.push_back(currentPosition);
 
 		for (int i = 0; i < 8; i++)
 		{
-			glm::vec3 nextPosition = determineNextPosition(currentPosition, randomPos, bounds, length);
+			glm::vec3 nextPosition = determineNextPosition(currentPosition, randomPos, wallBounds, true);
 			if (nextPosition == glm::vec3(99, 99, 99))
 			{
 				randomPos.clear();
@@ -317,13 +631,13 @@ std::vector<glm::vec3> randomize()
 			currentPosition = nextPosition;
 		}
 
-		for (int i = 0; i < length; i++)
+		for (int i = 0; i < wallBounds.size(); i++)
 		{
 			bool boundaryFound = false;
 
 			for (int j = 0; j < randomPos.size(); j++)
 			{
-				if (bounds[i].x == randomPos[j].x && bounds[i].y == randomPos[j].y)
+				if (wallBounds[i].x == randomPos[j].x && wallBounds[i].y == randomPos[j].y)
 					boundaryFound = true;
 
 				if (boundaryFound)
@@ -339,6 +653,100 @@ std::vector<glm::vec3> randomize()
 	} while (coveringAllBounds == false);
 
 	return randomPos;
+}
+
+std::vector<glm::vec3> randomizeWall(int numberOfCubes)
+{
+	counter += 1;
+
+	std::vector<glm::vec3> outerPositions =
+	{
+		glm::vec3(-1.0f, -1.0f, 0.0f),
+		glm::vec3(0.0f, -1.0f, 0.0f),
+		glm::vec3(1.0f, -1.0f, 0.0f),
+		glm::vec3(2.0f, -1.0f, 0.0f),
+		glm::vec3(3.0f, -1.0f, 0.0f),
+		glm::vec3(4.0f, -1.0f, 0.0f),
+		glm::vec3(-1.0f, 4.0f, 0.0f),
+		glm::vec3(0.0f, 4.0f, 0.0f),
+		glm::vec3(1.0f, 4.0f, 0.0f),
+		glm::vec3(2.0f, 4.0f, 0.0f),
+		glm::vec3(3.0f, 4.0f, 0.0f),
+		glm::vec3(4.0f, 4.0f, 0.0f),
+		glm::vec3(-1.0f, 0.0f, 0.0f),
+		glm::vec3(-1.0f, 1.0f, 0.0f),
+		glm::vec3(-1.0f, 2.0f, 0.0f),
+		glm::vec3(-1.0f, 3.0f, 0.0f),
+		glm::vec3(-1.0f, 4.0f, 0.0f),
+		glm::vec3(4.0f, 0.0f, 0.0f),
+		glm::vec3(4.0f, 1.0f, 0.0f),
+		glm::vec3(4.0f, 2.0f, 0.0f),
+		glm::vec3(4.0f, 3.0f, 0.0f),
+		glm::vec3(4.0f, 4.0f, 0.0f)
+	};
+
+	std::vector<glm::vec3> innerPositions =
+	{
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f),
+		glm::vec3(0.0f, 2.0f, 0.0f),
+		glm::vec3(0.0f, 3.0f, 0.0f),
+		glm::vec3(1.0f, 0.0f, 0.0f),
+		glm::vec3(1.0f, 1.0f, 0.0f),
+		glm::vec3(1.0f, 2.0f, 0.0f),
+		glm::vec3(1.0f, 3.0f, 0.0f),
+		glm::vec3(2.0f, 0.0f, 0.0f),
+		glm::vec3(2.0f, 1.0f, 0.0f),
+		glm::vec3(2.0f, 2.0f, 0.0f),
+		glm::vec3(2.0f, 3.0f, 0.0f),
+		glm::vec3(3.0f, 0.0f, 0.0f),
+		glm::vec3(3.0f, 1.0f, 0.0f),
+		glm::vec3(3.0f, 2.0f, 0.0f),
+		glm::vec3(3.0f, 3.0f, 0.0f)
+	};
+
+	std::vector<glm::vec3> randomPos;
+	bool isSymmetric = false;
+
+	do
+	{
+		int randomIndex = rand() % innerPositions.size();
+		glm::vec3 currentPosition = innerPositions[randomIndex];
+		randomPos.push_back(currentPosition);
+
+		for (int i = 0; i < numberOfCubes - 1; i++)
+		{
+			glm::vec3 nextPosition = determineNextPosition(currentPosition, randomPos, innerPositions, false);
+			if (nextPosition == glm::vec3(99, 99, 99))
+			{
+				randomPos.clear();
+				return randomPos;
+			}
+			randomPos.push_back(nextPosition);
+			currentPosition = nextPosition;
+		}
+
+		if (boundsAreSymmetric(randomPos))
+			isSymmetric = true;
+
+	} while (isSymmetric);
+
+	wallBounds = randomPos;
+
+	std::vector<glm::vec3> wallPos;
+	std::vector<glm::vec3> posDiff;
+	
+	for (int i = 0; i < innerPositions.size(); i++)
+	{
+		if (std::find(randomPos.begin(), randomPos.end(), innerPositions[i]) == randomPos.end())
+			posDiff.push_back(innerPositions[i]);
+	}
+
+	wallPos.reserve(posDiff.size() + outerPositions.size());
+	wallPos.insert(wallPos.end(), posDiff.begin(), posDiff.end());
+	wallPos.insert(wallPos.end(), outerPositions.begin(), outerPositions.end());
+
+	return wallPos;
 }
 
 void displayShape(Shader shader)
@@ -361,60 +769,33 @@ void displayShape(Shader shader)
 
 void displayFloor(Shader shader)
 {
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(-1.5f, -1.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(10.0f, 0.0f, 10.0f));
-		shader.setMat4("model", model);
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(-1.5f, -1.0f, 0.0f));
+	model = glm::scale(model, glm::vec3(10.0f, 0.0f, 10.0f));
+	shader.setMat4("model", model);
 
-		glDrawArrays(renderModeShape, 42, 6);
+	glDrawArrays(renderModeShape, 42, 6);
 }
 
 void displayBackground(Shader shader)
 {
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(-1.5f, 0.0f, -5.0f));
-		model = glm::scale(model, glm::vec3(10.0f, 10.0f, 0.0f));
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(-1.5f, 0.0f, -5.0f));
+	model = glm::scale(model, glm::vec3(10.0f, 10.0f, 0.0f));
 	
-		shader.setMat4("model", model);
+	shader.setMat4("model", model);
 
-		glDrawArrays(renderModeShape, 36, 6);
+	glDrawArrays(renderModeShape, 36, 6);
 }
 
 void displayWall(Shader shader)
 {
-	glm::vec3 positions[] =
-	{
-		glm::vec3(-1.0f, -1.0f, 0.0f),
-		glm::vec3(0.0f, -1.0f, 0.0f),
-		glm::vec3(1.0f, -1.0f, 0.0f),
-		glm::vec3(-1.0f, 0.0f, 0.0f),
-		glm::vec3(-1.0f, 1.0f, 0.0f),
-		glm::vec3(-1.0f, 2.0f, 0.0f),
-		glm::vec3(0.0f, 2.0f, 0.0f),
-		glm::vec3(1.0f, 2.0f, 0.0f),
-		glm::vec3(2.0f, 2.0f, 0.0f),
-		glm::vec3(2.0f, 3.0f, 0.0f),
-		glm::vec3(3.0f, 3.0f, 0.0f),
-		glm::vec3(4.0f, 3.0f, 0.0f),
-		glm::vec3(4.0f, 2.0f, 0.0f),
-		glm::vec3(4.0f, 1.0f, 0.0f),
-		glm::vec3(4.0f, 0.0f, 0.0f),
-		glm::vec3(3.0f, 0.0f, 0.0f),
-		glm::vec3(2.0f, 0.0f, 0.0f),
-		glm::vec3(2.0f, -1.0f, 0.0f),
-		glm::vec3(3.0f, -1.0f, 0.0f),
-		glm::vec3(4.0f, -1.0f, 0.0f),
-		glm::vec3(-1.0f, 3.0f, 0.0f),
-		glm::vec3(0.0f, 3.0f, 0.0f),
-		glm::vec3(1.0f, 3.0f, 0.0f)
-	};
-
-	for (int i = 0; i < sizeof(positions)/sizeof(glm::vec3); i++)
+	for (int i = 0; i < wallPositions.size(); i++)
 	{
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::scale(model, glm::vec3(0.07f, 0.07f, 0.03f));
 		model = glm::translate(model, glm::vec3(-1.0f, 2.0f, -100.0f + wallMovement));
-		model = glm::translate(model, positions[i]);
+		model = glm::translate(model, wallPositions[i]);
 		model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 		shader.setMat4("model", model);
@@ -664,6 +1045,44 @@ void processInput(GLFWwindow* window)
 	}
 }
 
+GLuint loadTexture(const char* filename) // From lab
+{
+	// Step1 Create and bind textures
+	GLuint textureId = 0;
+	glGenTextures(1, &textureId);
+	assert(textureId != 0);
+
+	glBindTexture(GL_TEXTURE_2D, textureId);
+
+	// Step2 Set filter parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	// Step3 Load Textures with dimension data
+	int width, height, nrChannels;
+	unsigned char* data = stbi_load(filename, &width, &height, &nrChannels, 0);
+	if (!data)
+	{
+		std::cerr << "Error::Texture could not load texture file:" << filename << std::endl;
+		return 0;
+	}
+	// Step4 Upload the texture to the PU
+	GLenum format = 0;
+	if (nrChannels == 1)
+		format = GL_RED;
+	else if (nrChannels == 3)
+		format = GL_RGB;
+	else if (nrChannels == 4)
+		format = GL_RGBA;
+	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height,
+		0, format, GL_UNSIGNED_BYTE, data);
+
+	// Step5 Free resources
+	stbi_image_free(data);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return textureId;
+}
+
 int main(int argc, char* argv[])
 {
 	// Initialize GLFW and OpenGL version
@@ -745,7 +1164,12 @@ int main(int argc, char* argv[])
 
 	do
 	{
-		shapePositions = randomize();
+		wallPositions = randomizeWall(numberOfCubesInWall);
+	} while (wallPositions.size() == 0);
+
+	do
+	{
+		shapePositions = randomizeShape();
 	} while (shapePositions.size() == 0);
 
 	// glowFBO = buildGlowFrameBuffer();
@@ -791,14 +1215,19 @@ int main(int argc, char* argv[])
 		
 		if (shapeMovement > 45.0f) 
 		{
+			do
+			{
+				wallPositions = randomizeWall(numberOfCubesInWall);
+			} while (wallPositions.size() == 0);
+
 			shapeMovement = 0.0f;
 			do
 			{
-				shapePositions = randomize();
+				shapePositions = randomizeShape();
 			} while (shapePositions.size() == 0);
 		}
 		else 
-			shapeMovement += 0.10f;
+			shapeMovement += 0.1f;
 
 		// Display 
 		mainShader.use();
@@ -850,42 +1279,4 @@ int main(int argc, char* argv[])
 	glfwTerminate();
 
 	return 0;
-}
-
-GLuint loadTexture(const char *filename) // From lab
-{
-	// Step1 Create and bind textures
-	GLuint textureId = 0;
-	glGenTextures(1, &textureId);
-	assert(textureId != 0);
-
-	glBindTexture(GL_TEXTURE_2D, textureId);
-
-	// Step2 Set filter parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	// Step3 Load Textures with dimension data
-	int width, height, nrChannels;
-	unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
-	if (!data)
-	{
-		std::cerr << "Error::Texture could not load texture file:" << filename << std::endl;
-		return 0;
-	}
-	// Step4 Upload the texture to the PU
-	GLenum format = 0;
-	if (nrChannels == 1)
-		format = GL_RED;
-	else if (nrChannels == 3)
-		format = GL_RGB;
-	else if (nrChannels == 4)
-		format = GL_RGBA;
-	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height,
-		0, format, GL_UNSIGNED_BYTE, data);
-
-	// Step5 Free resources
-	stbi_image_free(data);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	return textureId;
 }
