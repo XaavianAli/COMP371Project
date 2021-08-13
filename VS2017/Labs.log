@@ -9,10 +9,11 @@ D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2
 D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(843,21): warning C4018: '<': signed/unsigned mismatch
 D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(847,22): warning C4018: '<': signed/unsigned mismatch
 D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(948,20): warning C4018: '<': signed/unsigned mismatch
-D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(1002,20): warning C4018: '<': signed/unsigned mismatch
-D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(1072,21): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(1222,24): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
-D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(1238,22): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(1259,23): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
-D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(1265,21): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(969,20): warning C4018: '<': signed/unsigned mismatch
+D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(1028,20): warning C4018: '<': signed/unsigned mismatch
+D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(1098,21): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(1230,24): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(1246,22): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(1267,23): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Source\A2_team4.cpp(1273,21): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
   Labs.vcxproj -> D:\Main\Concordia University\Course Works\Term 5\Comp 371\Assignment 3\Bin\Labs-Debug.exe

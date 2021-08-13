@@ -1102,69 +1102,57 @@ void processInput(GLFWwindow* window)
 		translateShapeZ = 0.0;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // Texture controls
-	{
-		ePressed = true;
-	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		aPressed = true;
 
-	if (ePressed && glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE) // Rotate clockwise
+	if (aPressed && glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE)
 	{
-		ePressed = false;
+		aPressed = false;
 		rotateShapeY += 90;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // texture controls
-	{
-		qPressed = true;
-	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		dPressed = true;
 
-	if (qPressed && glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE) // Rotate counterclockwise
+	if (dPressed && glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE)
 	{
-		qPressed = false;
+		dPressed = false;
 		rotateShapeY -= 90;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // texture controls
-	{
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		wPressed = true;
-	}
 
-	if (wPressed && glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE) // Rotate counterclockwise
+	if (wPressed && glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE)
 	{
 		wPressed = false;
 		rotateShapeX += 90;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // texture controls
-	{
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 		sPressed = true;
-	}
 
-	if (sPressed && glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE) // Rotate counterclockwise
+	if (sPressed && glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE)
 	{
 		sPressed = false;
 		rotateShapeX -= 90;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // texture controls
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+		qPressed = true;
+
+	if (qPressed && glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE)
 	{
-		aPressed = true;
-	}
-	
-	if (aPressed && glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE) // Rotate counterclockwise
-	{
-		aPressed = false;
+		qPressed = false;
 		rotateShapeZ += 90;
 	}
-	 
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // texture controls
-	{
-		dPressed = true;
-	}
 
-	if (dPressed && glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE) // Rotate counterclockwise
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+		ePressed = true;
+
+	if (ePressed && glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE)
 	{
-		dPressed = false;
+		ePressed = false;
 		rotateShapeZ -= 90;
 	}
 
@@ -1181,9 +1169,7 @@ void processInput(GLFWwindow* window)
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) // texture controls
-	{
 		xPressed = true;
-	}
 
 	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_RELEASE && xPressed)
 	{
@@ -1193,9 +1179,7 @@ void processInput(GLFWwindow* window)
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) // glow controls
-	{
 		kPressed = true;
-	}
 
 	if (glfwGetKey(window, GLFW_KEY_K) == GLFW_RELEASE && kPressed)
 	{
@@ -1205,9 +1189,7 @@ void processInput(GLFWwindow* window)
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) //shadow controls
-	{
 		bPressed = true;
-	}
 
 	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE && bPressed)
 	{
