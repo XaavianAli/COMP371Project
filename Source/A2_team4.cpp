@@ -960,16 +960,49 @@ std::vector<glm::vec3> randomizeWall(int numberOfCubes)
 
 void displayShape(Shader shader)
 {
+
+
+	float minX = 100.0f;
+	float maxX = -100.0f;
+	float minY = 100.0f;
+	float maxY = -100.0f;
+	float minZ = 100.0f;
+	float maxZ = - 100.0f;
+
+	for (glm::vec3 shape : shapePositions) {
+		if (shape.x < minX) minX = shape.x;
+		if (shape.x > maxX) maxX = shape.x;
+		if (shape.y < minY) minY = shape.y;
+		if (shape.y > maxY) maxY = shape.y;
+		if (shape.z < minZ) minZ = shape.z;
+		if (shape.z > maxZ) maxZ = shape.z;
+	}
+	
+	float centerX = (maxX - minX)/2 + minX;
+	float centerY = (maxY - minY)/2 + minY;
+	float centerZ = (maxZ - minZ)/2 + minZ;
+
 	for (int i = 0; i < 9; i++)
 	{
 		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3((0.5f + translateShapeX) * 0.07f, (3.0f + translateShapeY) * 0.07f, (3.0f + translateShapeZ - shapeMovement) * 0.07f));
+		model = glm::translate(model, glm::vec3((0.0f + translateShapeX) * 0.07f, (0.0f + translateShapeY) * 0.07f, (0.0f + translateShapeZ - shapeMovement) * 0.07f));
+	
+		model = glm::scale(model, glm::vec3(0.07f * scaleShape, 0.07f * scaleShape, 0.07f * scaleShape));
+		model = glm::translate(model, shapePositions[i]);
+	
+		
+		model = glm::translate(model, glm::vec3(( -shapePositions[i].x) + centerX, -shapePositions[i].y + centerY, -shapePositions[i].z + centerZ));
+
+
 		model = glm::rotate(model, glm::radians(rotateShapeZ), glm::vec3(0.0f, 0.0f, 1.0f));
 		model = glm::rotate(model, glm::radians(rotateShapeY), glm::vec3(0.0f, 1.0f, 0.0f));
 		model = glm::rotate(model, glm::radians(rotateShapeX), glm::vec3(1.0f, 0.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.07f * scaleShape, 0.07f * scaleShape, 0.07f * scaleShape));
-		model = glm::translate(model, shapePositions[i]);
-		model = glm::translate(model, glm::vec3(-1.5f, -1.0f, -1.0f));
+
+			model = glm::translate(model, glm::vec3(( shapePositions[i].x - centerX ), shapePositions[i].y - centerY, shapePositions[i].z - centerZ));
+
+		
+
+	
 		shader.setMat4("model", model);
 
 		glDrawArrays(renderModeShape, 0, 36);
@@ -1003,7 +1036,7 @@ void displayWall(Shader shader)
 	{
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::scale(model, glm::vec3(0.07f, 0.07f, 0.03f));
-		model = glm::translate(model, glm::vec3(-1.0f, 2.0f, -100.0f + wallMovement));
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, -100.0f + wallMovement));
 		model = glm::translate(model, wallPositions[i]);
 		model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
