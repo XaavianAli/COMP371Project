@@ -88,7 +88,11 @@ float rotateShapeZ = 0.0f;
 std::vector<glm::vec3> shapePositions;
 std::vector<glm::vec3> wallPositions;
 std::vector<glm::vec3> wallBounds;
-int numberOfCubesInWall = 7;
+
+// Levels parameters
+int numberOfCubesInWall = 5;
+int level = 1;
+float shapeSpeed = 0.04f;
 
 // To only rotate once 
 bool rotateShape = false;
@@ -302,6 +306,62 @@ bool boundsAreSymmetric(std::vector<glm::vec3> wallBounds)
 			glm::vec3(1.0f, -1.0f, 0.0f),
 			glm::vec3(1.0f, -2.0f, 0.0f),
 			glm::vec3(2.0f, -2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -2.0f, 0.0f)
 		}
 	};
 	std::vector<std::vector<glm::vec3>> symmetricBoundsSizeSix =
@@ -417,6 +477,38 @@ bool boundsAreSymmetric(std::vector<glm::vec3> wallBounds)
 			glm::vec3(0.0f, 3.0f, 0.0f),
 			glm::vec3(1.0f, 1.0f, 0.0f),
 			glm::vec3(1.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f),
+			glm::vec3(3.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -2.0f, 0.0f),
+			glm::vec3(3.0f, -2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, -1.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(1.0f, -2.0f, 0.0f),
+			glm::vec3(2.0f, -2.0f, 0.0f),
+			glm::vec3(2.0f, -3.0f, 0.0f)
 		}
 	};
 	std::vector<std::vector<glm::vec3>> symmetricBoundsSizeSeven =
@@ -492,6 +584,123 @@ bool boundsAreSymmetric(std::vector<glm::vec3> wallBounds)
 			glm::vec3(2.0f, 2.0f, 0.0f),
 			glm::vec3(1.0f, 2.0f, 0.0f),
 			glm::vec3(0.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 2.0f, 0.0f),
+			glm::vec3(3.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 3.0f, 0.0f),
+			glm::vec3(1.0f, 3.0f, 0.0f),
+			glm::vec3(2.0f, 3.0f, 0.0f),
+			glm::vec3(3.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, -1.0f, 0.0f),
+			glm::vec3(3.0f, -2.0f, 0.0f),
+			glm::vec3(3.0f, -3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -2.0f, 0.0f),
+			glm::vec3(0.0f, -1.0f, 0.0f),
+			glm::vec3(1.0f, -2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f),
+			glm::vec3(3.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 2.0f, 0.0f),
+			glm::vec3(3.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 3.0f, 0.0f),
+			glm::vec3(2.0f, 3.0f, 0.0f),
+			glm::vec3(3.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f)
 		}
 	};
 
@@ -1045,6 +1254,43 @@ void processInput(GLFWwindow* window)
 	}
 }
 
+void calculateCameraViewVector()
+{
+	pitch -= mouseYChange;
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+	mouseXChange *= sensitivity;
+	yaw += mouseXChange;
+
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(direction);
+	cameraPos = glm::vec3(0.0f, 0.07f * 6.0f, 1.0f - shapeMovement * 0.07f);
+}
+
+void setLevelParameters()
+{
+	switch (level % 3)
+	{
+	case 1:
+		numberOfCubesInWall = 5;
+		break;
+	case 2:
+		numberOfCubesInWall = 6;
+		break;
+	case 0:
+		numberOfCubesInWall = 7;
+		break;
+	default:
+		break;
+	}
+
+	shapeSpeed = 0.04f + ((level / 3) + 1) * 0.02f;
+}
+
 GLuint loadTexture(const char* filename) // From lab
 {
 	// Step1 Create and bind textures
@@ -1098,6 +1344,7 @@ int main(int argc, char* argv[])
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
 #endif
 
+	// Sets the main window
 	GLFWwindow* window = glfwCreateWindow(1024, 768, "Comp371 - Assignment 1", NULL, NULL);
 	if (window == NULL)
 	{
@@ -1106,9 +1353,12 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 	glfwMakeContextCurrent(window);
-//	glEnable(GL_CULL_FACE);
+
+	// General parameters
+    glEnable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glEnable(GL_TEXTURE_2D);
+
 	// Initialize GLEW
 	glewExperimental = true; // Needed for core profile
 	if (glewInit() != GLEW_OK)
@@ -1139,7 +1389,6 @@ int main(int argc, char* argv[])
 	skyboxRight = loadTexture("../Assets/Textures/SkyBoxRight.png");
 	skyboxTop = loadTexture("../Assets/Textures/SkyBoxTop.png");
 #endif
-	glEnable(GL_CULL_FACE);
 
 	// Black background
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -1151,22 +1400,24 @@ int main(int argc, char* argv[])
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwGetCursorPos(window, &lastMousePosX, &lastMousePosY);
 
-	// Compile and link shaders here ...
+	// Compiles and links shaders
 	Shader mainShader("shape.vertexshader", "shape.fragmentshader");
 	Shader shadowShader("depth.vertexshader", "depth.fragmentshader");
-	
+
+	// Shader parameters
 	mainShader.use();
 	mainShader.setFloat("gridUnitLength", gridUnitLength);
 	mainShader.setBool("useTextures", useTextures);
 	
+	// Creates array and buffer objects
 	GLuint cubeVao = createCubeVao();
 	GLuint depthMapFBO = buildDepthMapFrameBuffer();
 
+	// Shape and wall randomization
 	do
 	{
 		wallPositions = randomizeWall(numberOfCubesInWall);
 	} while (wallPositions.size() == 0);
-
 	do
 	{
 		shapePositions = randomizeShape();
@@ -1180,76 +1431,63 @@ int main(int argc, char* argv[])
 		// Each frame, reset color of each pixel to glClearColor
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Mouse movements
+		// Mouse positional difference
 		glfwGetCursorPos(window, &mousePosX, &mousePosY);
-
-		// Calculate the positional differences
 		mouseXChange = mousePosX - lastMousePosX;
 		mouseYChange = mousePosY - lastMousePosY;
-
 		lastMousePosX = mousePosX;
 		lastMousePosY = mousePosY;
-
 		mouseYChange *= sensitivity;
-		pitch -= mouseYChange;
-
-		if (pitch > 89.0f)
-			pitch = 89.0f;
-		if (pitch < -89.0f)
-			pitch = -89.0f;
-
-		mouseXChange *= sensitivity;
-		yaw += mouseXChange;
-		glm::vec3 direction;
 
 		// Processing input
 		processInput(window);
 		
-		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		direction.y = sin(glm::radians(pitch));
-		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-		cameraFront = glm::normalize(direction);
-		cameraPos = glm::vec3(0.0f, 0.07f * 6.0f, 1.0f - shapeMovement * 0.07f);
+		// Mouse movement
+		calculateCameraViewVector();
+
+		// Shadows
 		mainShader.setBool("useTextures", false);
 		calculateShadows(shadowShader, mainShader, depthMapFBO, cubeVao, window);
-		
+
+		// Shape movement and randomization
 		if (shapeMovement > 45.0f) 
 		{
-			do
-			{
-				wallPositions = randomizeWall(numberOfCubesInWall);
-			} while (wallPositions.size() == 0);
-
 			shapeMovement = 0.0f;
+			level += 1;
+			setLevelParameters();
+
 			do
-			{
+				wallPositions = randomizeWall(numberOfCubesInWall);
+			while (wallPositions.size() == 0);
+			do
 				shapePositions = randomizeShape();
-			} while (shapePositions.size() == 0);
+			while (shapePositions.size() == 0);
 		}
 		else 
-			shapeMovement += 0.1f;
+			shapeMovement += shapeSpeed;
 
-		// Display 
+		// Display parameters
 		mainShader.use();
 		buildMatrices(mainShader);
 		mainShader.setVec3("viewPos", cameraPos);
 		mainShader.setBool("useTextures", useTextures);
 		mainShader.setBool("useShadows", useShadows);
 		
+		// Wall display
 		glBindVertexArray(cubeVao);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, brickTextureID);
 		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
-		
 		displayWall(mainShader);
 		
+		// Shape display
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, metalTextureID);
 		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
 		displayShape(mainShader);
-
 		mainShader.setBool("useTextures", true);
 
+		// Floor display
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, skyboxFront);
 		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
@@ -1257,6 +1495,7 @@ int main(int argc, char* argv[])
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		displayFloor(mainShader);
 
+		// Background display
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, skyboxBottom);
 		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
