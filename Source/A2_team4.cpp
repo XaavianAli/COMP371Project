@@ -15,8 +15,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h" //image loading library from https://github.com/nothings/stb
 
-using namespace std;
-GLuint loadTexture(const char *filename);
+int counter = 0;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -87,6 +86,27 @@ float rotateShapeX = 0.0f;
 float rotateShapeY = 0.0f;
 float rotateShapeZ = 0.0f;
 std::vector<glm::vec3> shapePositions;
+std::vector<glm::vec3> wallPositions;
+std::vector<glm::vec3> wallBounds;
+
+//Variables for smooth rotation
+bool rotatingXp = false;
+int rotateCounterXp = 0;
+bool rotatingXn = false;
+int rotateCounterXn = 0;
+bool rotatingYp = false;
+int rotateCounterYp = 0;
+bool rotatingYn = false;
+int rotateCounterYn = 0;
+bool rotatingZp = false;
+int rotateCounterZp = 0;
+bool rotatingZn = false;
+int rotateCounterZn = 0;
+
+// Levels parameters
+int numberOfCubesInWall = 5;
+int level = 1;
+float shapeSpeed = 0.04f;
 
 // To only rotate once 
 bool rotateShape = false;
@@ -254,7 +274,532 @@ void buildMatrices(Shader shader)
 	shader.setMat4("projection", projection);
 }
 
-glm::vec3 determineNextPosition(glm::vec3 currentPosition, std::vector<glm::vec3> processedPositions, std::vector<glm::vec3> bounds, int boundsLength)
+bool boundsAreSymmetric(std::vector<glm::vec3> wallBounds)
+{
+	std::vector<glm::vec3> translatedBounds;
+	glm::vec3 selectedBound = wallBounds[0];
+	for (int i = 0; i < wallBounds.size(); i++)
+	{
+		if (wallBounds[i].x < selectedBound.x || wallBounds[i].x == selectedBound.x && wallBounds[i].y < selectedBound.y)
+			selectedBound = wallBounds[i];
+	}
+
+	for (int i = 0; i < wallBounds.size(); i++)
+	{
+		translatedBounds.push_back(wallBounds[i] - selectedBound);
+	}
+
+	std::vector<std::vector<glm::vec3>> symmetricBoundsSizeFive =
+	{
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(1.0f, -2.0f, 0.0f),
+			glm::vec3(2.0f, -2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -2.0f, 0.0f)
+		}
+	};
+	std::vector<std::vector<glm::vec3>> symmetricBoundsSizeSix =
+	{
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 3.0f, 0.0f),
+			glm::vec3(2.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(1.0f, -2.0f, 0.0f),
+			glm::vec3(1.0f, -3.0f, 0.0f),
+			glm::vec3(2.0f, -3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 3.0f, 0.0f),
+			glm::vec3(0.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 3.0f, 0.0f),
+			glm::vec3(1.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 3.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f),
+			glm::vec3(3.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -2.0f, 0.0f),
+			glm::vec3(3.0f, -2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, -1.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(1.0f, -2.0f, 0.0f),
+			glm::vec3(2.0f, -2.0f, 0.0f),
+			glm::vec3(2.0f, -3.0f, 0.0f)
+		}
+	};
+	std::vector<std::vector<glm::vec3>> symmetricBoundsSizeSeven =
+	{
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 2.0f, 0.0f),
+			glm::vec3(3.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 3.0f, 0.0f),
+			glm::vec3(1.0f, 3.0f, 0.0f),
+			glm::vec3(2.0f, 3.0f, 0.0f),
+			glm::vec3(3.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, 0.0f, 0.0f),
+			glm::vec3(3.0f, -1.0f, 0.0f),
+			glm::vec3(3.0f, -2.0f, 0.0f),
+			glm::vec3(3.0f, -3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -2.0f, 0.0f),
+			glm::vec3(0.0f, -1.0f, 0.0f),
+			glm::vec3(1.0f, -2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f),
+			glm::vec3(3.0f, -1.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 1.0f, 0.0f),
+			glm::vec3(3.0f, 2.0f, 0.0f),
+			glm::vec3(3.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f, 3.0f, 0.0f),
+			glm::vec3(2.0f, 3.0f, 0.0f),
+			glm::vec3(3.0f, 3.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 2.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 2.0f, 0.0f)
+		},
+		{
+			glm::vec3(0.0f, 0.0f, 0.0f),
+			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, 0.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f)
+		}
+	};
+
+	std::vector<std::vector<glm::vec3>> symmetricBounds;
+	switch (wallBounds.size())
+	{
+	case 5:
+		symmetricBounds = symmetricBoundsSizeFive;
+		break;
+	case 6:
+		symmetricBounds = symmetricBoundsSizeSix;
+		break;
+	case 7:
+		symmetricBounds = symmetricBoundsSizeSeven;
+		break;
+	}
+
+	for (int i = 0; i < symmetricBounds.size(); i++)
+	{
+		std::sort(symmetricBounds[i].begin(), symmetricBounds[i].end(),
+			[](const glm::vec3& lhs, const glm::vec3& rhs)
+			{
+				if (lhs.x == rhs.x)
+				{
+					if (lhs.y == rhs.y)
+						return lhs.z < rhs.z;
+
+					return lhs.y < rhs.y;
+				}
+
+				return lhs.x < rhs.x;
+			});
+	}
+
+	std::sort(translatedBounds.begin(), translatedBounds.end(),
+		[](const glm::vec3& lhs, const glm::vec3& rhs)
+		{
+			if (lhs.x == rhs.x)
+			{
+				if (lhs.y == rhs.y)
+					return lhs.z < rhs.z;
+
+				return lhs.y < rhs.y;
+			}
+
+			return lhs.x < rhs.x;
+		});
+
+	bool symmetryFound = false;
+	for (int i = 0; i < symmetricBounds.size(); i++)
+	{
+		if (symmetricBounds[i] == translatedBounds)
+			symmetryFound = true;
+	}
+
+	return symmetryFound;
+}
+
+glm::vec3 determineNextPosition(glm::vec3 currentPosition, std::vector<glm::vec3> processedPositions, std::vector<glm::vec3> bounds, bool forMainShape)
 {
 	glm::vec3 nextPosition;
 	bool timeToBreak = false;
@@ -262,20 +807,24 @@ glm::vec3 determineNextPosition(glm::vec3 currentPosition, std::vector<glm::vec3
 
 	while (true)
 	{
-		glm::vec3 relativePositions[] =
+		std::vector<glm::vec3> relativePositions =
 		{
 			glm::vec3(1.0f, 0.0f, 0.0f),
 			glm::vec3(-1.0f, 0.0f, 0.0f),
 			glm::vec3(0.0f, 1.0f, 0.0f),
-			glm::vec3(0.0f, -1.0f, 0.0f),
-			glm::vec3(0.0f, 0.0f, 1.0f),
-			glm::vec3(0.0f, 0.0f, -1.0f),
+			glm::vec3(0.0f, -1.0f, 0.0f)
 		};
 
-		int randomIndex = rand() % 6;
+		if (forMainShape)
+		{
+			relativePositions.push_back(glm::vec3(0.0f, 0.0f, 1.0f));
+			relativePositions.push_back(glm::vec3(0.0f, 0.0f, -1.0f));
+		}
+
+		int randomIndex = rand() % relativePositions.size();
 		glm::vec3 relativePosition = relativePositions[randomIndex];
 
-		for (int i = 0; i < boundsLength; i++)
+		for (int i = 0; i < bounds.size(); i++)
 		{
 			if (currentPosition.x + relativePosition.x == bounds[i].x && currentPosition.y + relativePosition.y == bounds[i].y)
 			{
@@ -305,20 +854,8 @@ glm::vec3 determineNextPosition(glm::vec3 currentPosition, std::vector<glm::vec3
 	return nextPosition;
 }
 
-std::vector<glm::vec3> randomize()
+std::vector<glm::vec3> randomizeShape()
 {
-	int length = 7;
-	std::vector<glm::vec3> bounds =
-	{
-		glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(1.0f, 0.0f, 0.0f),
-		glm::vec3(0.0f, 1.0f, 0.0f),
-		glm::vec3(1.0f, 1.0f, 0.0f),
-		glm::vec3(2.0f, 1.0f, 0.0f),
-		glm::vec3(3.0f, 1.0f, 0.0f),
-		glm::vec3(3.0f, 2.0f, 0.0f)
-	};
-
 	std::vector<glm::vec3> randomPos;
 	bool coveringAllBounds;
 
@@ -327,13 +864,13 @@ std::vector<glm::vec3> randomize()
 		coveringAllBounds = true;
 		randomPos.clear();
 
-		int randomIndex = rand() % length;
-		glm::vec3 currentPosition = bounds[randomIndex];
+		int randomIndex = rand() % wallBounds.size();
+		glm::vec3 currentPosition = wallBounds[randomIndex];
 		randomPos.push_back(currentPosition);
 
 		for (int i = 0; i < 8; i++)
 		{
-			glm::vec3 nextPosition = determineNextPosition(currentPosition, randomPos, bounds, length);
+			glm::vec3 nextPosition = determineNextPosition(currentPosition, randomPos, wallBounds, true);
 			if (nextPosition == glm::vec3(99, 99, 99))
 			{
 				randomPos.clear();
@@ -343,13 +880,13 @@ std::vector<glm::vec3> randomize()
 			currentPosition = nextPosition;
 		}
 
-		for (int i = 0; i < length; i++)
+		for (int i = 0; i < wallBounds.size(); i++)
 		{
 			bool boundaryFound = false;
 
 			for (int j = 0; j < randomPos.size(); j++)
 			{
-				if (bounds[i].x == randomPos[j].x && bounds[i].y == randomPos[j].y)
+				if (wallBounds[i].x == randomPos[j].x && wallBounds[i].y == randomPos[j].y)
 					boundaryFound = true;
 
 				if (boundaryFound)
@@ -367,18 +904,145 @@ std::vector<glm::vec3> randomize()
 	return randomPos;
 }
 
+std::vector<glm::vec3> randomizeWall(int numberOfCubes)
+{
+	counter += 1;
+
+	std::vector<glm::vec3> outerPositions =
+	{
+		glm::vec3(-1.0f, -1.0f, 0.0f),
+		glm::vec3(0.0f, -1.0f, 0.0f),
+		glm::vec3(1.0f, -1.0f, 0.0f),
+		glm::vec3(2.0f, -1.0f, 0.0f),
+		glm::vec3(3.0f, -1.0f, 0.0f),
+		glm::vec3(4.0f, -1.0f, 0.0f),
+		glm::vec3(-1.0f, 4.0f, 0.0f),
+		glm::vec3(0.0f, 4.0f, 0.0f),
+		glm::vec3(1.0f, 4.0f, 0.0f),
+		glm::vec3(2.0f, 4.0f, 0.0f),
+		glm::vec3(3.0f, 4.0f, 0.0f),
+		glm::vec3(4.0f, 4.0f, 0.0f),
+		glm::vec3(-1.0f, 0.0f, 0.0f),
+		glm::vec3(-1.0f, 1.0f, 0.0f),
+		glm::vec3(-1.0f, 2.0f, 0.0f),
+		glm::vec3(-1.0f, 3.0f, 0.0f),
+		glm::vec3(-1.0f, 4.0f, 0.0f),
+		glm::vec3(4.0f, 0.0f, 0.0f),
+		glm::vec3(4.0f, 1.0f, 0.0f),
+		glm::vec3(4.0f, 2.0f, 0.0f),
+		glm::vec3(4.0f, 3.0f, 0.0f),
+		glm::vec3(4.0f, 4.0f, 0.0f)
+	};
+
+	std::vector<glm::vec3> innerPositions =
+	{
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f),
+		glm::vec3(0.0f, 2.0f, 0.0f),
+		glm::vec3(0.0f, 3.0f, 0.0f),
+		glm::vec3(1.0f, 0.0f, 0.0f),
+		glm::vec3(1.0f, 1.0f, 0.0f),
+		glm::vec3(1.0f, 2.0f, 0.0f),
+		glm::vec3(1.0f, 3.0f, 0.0f),
+		glm::vec3(2.0f, 0.0f, 0.0f),
+		glm::vec3(2.0f, 1.0f, 0.0f),
+		glm::vec3(2.0f, 2.0f, 0.0f),
+		glm::vec3(2.0f, 3.0f, 0.0f),
+		glm::vec3(3.0f, 0.0f, 0.0f),
+		glm::vec3(3.0f, 1.0f, 0.0f),
+		glm::vec3(3.0f, 2.0f, 0.0f),
+		glm::vec3(3.0f, 3.0f, 0.0f)
+	};
+
+	std::vector<glm::vec3> randomPos;
+	bool isSymmetric = false;
+
+	do
+	{
+		int randomIndex = rand() % innerPositions.size();
+		glm::vec3 currentPosition = innerPositions[randomIndex];
+		randomPos.push_back(currentPosition);
+
+		for (int i = 0; i < numberOfCubes - 1; i++)
+		{
+			glm::vec3 nextPosition = determineNextPosition(currentPosition, randomPos, innerPositions, false);
+			if (nextPosition == glm::vec3(99, 99, 99))
+			{
+				randomPos.clear();
+				return randomPos;
+			}
+			randomPos.push_back(nextPosition);
+			currentPosition = nextPosition;
+		}
+
+		if (boundsAreSymmetric(randomPos))
+			isSymmetric = true;
+
+	} while (isSymmetric);
+
+	wallBounds = randomPos;
+
+	std::vector<glm::vec3> wallPos;
+	std::vector<glm::vec3> posDiff;
+	
+	for (int i = 0; i < innerPositions.size(); i++)
+	{
+		if (std::find(randomPos.begin(), randomPos.end(), innerPositions[i]) == randomPos.end())
+			posDiff.push_back(innerPositions[i]);
+	}
+
+	wallPos.reserve(posDiff.size() + outerPositions.size());
+	wallPos.insert(wallPos.end(), posDiff.begin(), posDiff.end());
+	wallPos.insert(wallPos.end(), outerPositions.begin(), outerPositions.end());
+
+	return wallPos;
+}
+
 void displayShape(Shader shader)
 {
+
+
+	float minX = 100.0f;
+	float maxX = -100.0f;
+	float minY = 100.0f;
+	float maxY = -100.0f;
+	float minZ = 100.0f;
+	float maxZ = - 100.0f;
+
+	for (glm::vec3 shape : shapePositions) {
+		if (shape.x < minX) minX = shape.x;
+		if (shape.x > maxX) maxX = shape.x;
+		if (shape.y < minY) minY = shape.y;
+		if (shape.y > maxY) maxY = shape.y;
+		if (shape.z < minZ) minZ = shape.z;
+		if (shape.z > maxZ) maxZ = shape.z;
+	}
+	
+	float centerX = (maxX - minX)/2 + minX;
+	float centerY = (maxY - minY)/2 + minY;
+	float centerZ = (maxZ - minZ)/2 + minZ;
+
 	for (int i = 0; i < 9; i++)
 	{
 		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3((0.5f + translateShapeX) * 0.07f, (3.0f + translateShapeY) * 0.07f, (3.0f + translateShapeZ - shapeMovement) * 0.07f));
+		model = glm::translate(model, glm::vec3((0.0f + translateShapeX) * 0.07f, (0.0f + translateShapeY) * 0.07f, (0.0f + translateShapeZ - shapeMovement) * 0.07f));
+	
+		model = glm::scale(model, glm::vec3(0.07f * scaleShape, 0.07f * scaleShape, 0.07f * scaleShape));
+		model = glm::translate(model, shapePositions[i]);
+	
+		
+		model = glm::translate(model, glm::vec3(( -shapePositions[i].x) + centerX, -shapePositions[i].y + centerY, -shapePositions[i].z + centerZ));
+
+
 		model = glm::rotate(model, glm::radians(rotateShapeZ), glm::vec3(0.0f, 0.0f, 1.0f));
 		model = glm::rotate(model, glm::radians(rotateShapeY), glm::vec3(0.0f, 1.0f, 0.0f));
 		model = glm::rotate(model, glm::radians(rotateShapeX), glm::vec3(1.0f, 0.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(0.07f * scaleShape, 0.07f * scaleShape, 0.07f * scaleShape));
-		model = glm::translate(model, shapePositions[i]);
-		model = glm::translate(model, glm::vec3(-1.5f, -1.0f, -1.0f));
+
+			model = glm::translate(model, glm::vec3(( shapePositions[i].x - centerX ), shapePositions[i].y - centerY, shapePositions[i].z - centerZ));
+
+		
+
+	
 		shader.setMat4("model", model);
 
 		glDrawArrays(renderModeShape, 0, 36);
@@ -387,6 +1051,7 @@ void displayShape(Shader shader)
 void drawSkybox(Shader shader)
 {
 	glm::mat4 model = glm::mat4(1.0f);
+
 	model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f));
 	model = glm::scale(model, glm::vec3(20.0f, 20.0f, 20.0f));
 	
@@ -431,39 +1096,12 @@ void drawSkybox(Shader shader)
 
 void displayWall(Shader shader)
 {
-	glm::vec3 positions[] =
-	{
-		glm::vec3(-1.0f, -1.0f, 0.0f),
-		glm::vec3(0.0f, -1.0f, 0.0f),
-		glm::vec3(1.0f, -1.0f, 0.0f),
-		glm::vec3(-1.0f, 0.0f, 0.0f),
-		glm::vec3(-1.0f, 1.0f, 0.0f),
-		glm::vec3(-1.0f, 2.0f, 0.0f),
-		glm::vec3(0.0f, 2.0f, 0.0f),
-		glm::vec3(1.0f, 2.0f, 0.0f),
-		glm::vec3(2.0f, 2.0f, 0.0f),
-		glm::vec3(2.0f, 3.0f, 0.0f),
-		glm::vec3(3.0f, 3.0f, 0.0f),
-		glm::vec3(4.0f, 3.0f, 0.0f),
-		glm::vec3(4.0f, 2.0f, 0.0f),
-		glm::vec3(4.0f, 1.0f, 0.0f),
-		glm::vec3(4.0f, 0.0f, 0.0f),
-		glm::vec3(3.0f, 0.0f, 0.0f),
-		glm::vec3(2.0f, 0.0f, 0.0f),
-		glm::vec3(2.0f, -1.0f, 0.0f),
-		glm::vec3(3.0f, -1.0f, 0.0f),
-		glm::vec3(4.0f, -1.0f, 0.0f),
-		glm::vec3(-1.0f, 3.0f, 0.0f),
-		glm::vec3(0.0f, 3.0f, 0.0f),
-		glm::vec3(1.0f, 3.0f, 0.0f)
-	};
-
-	for (int i = 0; i < sizeof(positions)/sizeof(glm::vec3); i++)
+	for (int i = 0; i < wallPositions.size(); i++)
 	{
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::scale(model, glm::vec3(0.07f, 0.07f, 0.03f));
-		model = glm::translate(model, glm::vec3(-1.0f, 2.0f, -100.0f + wallMovement));
-		model = glm::translate(model, positions[i]);
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, -100.0f + wallMovement));
+		model = glm::translate(model, wallPositions[i]);
 		model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 		shader.setMat4("model", model);
@@ -526,6 +1164,58 @@ void calculateShadows(Shader shadowShader, Shader mainShader, GLuint depthMapFBO
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void rotateShapes(float x){
+
+	if (rotateCounterXp < 90 && rotatingXp){
+		rotateShapeX += x;
+		rotateCounterXp += x;
+	} else {
+		rotatingXp = false;
+		rotateCounterXp = 0;
+	}
+
+	if (rotateCounterXn < 90 && rotatingXn){
+		rotateShapeX -= x;
+		rotateCounterXn += x;
+	} else {
+		rotatingXn = false;
+		rotateCounterXn = 0;
+	}
+
+	if (rotateCounterYp < 90 && rotatingYp){
+		rotateShapeY += x;
+		rotateCounterYp += x;
+	} else {
+		rotatingYp = false;
+		rotateCounterYp = 0;
+	}
+
+	if (rotateCounterYn < 90 && rotatingYn){
+		rotateShapeY -= x;
+		rotateCounterYn += x;
+	} else {
+		rotatingYn = false;
+		rotateCounterYn = 0;
+	}
+
+	if (rotateCounterZp < 90 && rotatingZp){
+		rotateShapeZ += x;
+		rotateCounterZp += x;
+	} else {
+		rotatingZp = false;
+		rotateCounterZp = 0;
+	}
+
+	if (rotateCounterZn < 90 && rotatingZn){
+		rotateShapeZ -= x;
+		rotateCounterZn += x;
+	} else {
+		rotatingZn = false;
+		rotateCounterZn = 0;
+	}
+
+}
+
 void processInput(GLFWwindow* window)
 {
 	float currentFrame = glfwGetTime();
@@ -561,70 +1251,59 @@ void processInput(GLFWwindow* window)
 		translateShapeZ = 0.0;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // Texture controls
-	{
-		ePressed = true;
-	}
-
-	if (ePressed && glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE) // Rotate clockwise
-	{
-		ePressed = false;
-		rotateShapeY += 90;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // texture controls
-	{
-		qPressed = true;
-	}
-
-	if (qPressed && glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE) // Rotate counterclockwise
-	{
-		qPressed = false;
-		rotateShapeY -= 90;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) // texture controls
-	{
-		wPressed = true;
-	}
-
-	if (wPressed && glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE) // Rotate counterclockwise
-	{
-		wPressed = false;
-		rotateShapeX += 90;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) // texture controls
-	{
-		sPressed = true;
-	}
-
-	if (sPressed && glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE) // Rotate counterclockwise
-	{
-		sPressed = false;
-		rotateShapeX -= 90;
-	}
-
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // texture controls
-	{
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
 		aPressed = true;
 	}
-	
-	if (aPressed && glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE) // Rotate counterclockwise
+
+	if (aPressed && glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE)
 	{
 		aPressed = false;
-		rotateShapeZ += 90;
-	}
-	 
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // texture controls
-	{
-		dPressed = true;
+		rotatingYp = true;
 	}
 
-	if (dPressed && glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE) // Rotate counterclockwise
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		dPressed = true;
+
+	if (dPressed && glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE)
 	{
 		dPressed = false;
-		rotateShapeZ -= 90;
+		rotatingYn = true;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		wPressed = true;
+
+	if (wPressed && glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE)
+	{
+		wPressed = false;
+		rotatingXn = true;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		sPressed = true;
+
+	if (sPressed && glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE)
+	{
+		sPressed = false;
+		rotatingXp = true;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+		qPressed = true;
+
+	if (qPressed && glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE)
+	{
+		qPressed = false;
+		rotatingZp = true;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+		ePressed = true;
+
+	if (ePressed && glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE)
+	{
+		ePressed = false;
+		rotatingZn = true;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) // Reset Shapes
@@ -640,9 +1319,7 @@ void processInput(GLFWwindow* window)
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS) // texture controls
-	{
 		xPressed = true;
-	}
 
 	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_RELEASE && xPressed)
 	{
@@ -652,9 +1329,7 @@ void processInput(GLFWwindow* window)
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) // glow controls
-	{
 		kPressed = true;
-	}
 
 	if (glfwGetKey(window, GLFW_KEY_K) == GLFW_RELEASE && kPressed)
 	{
@@ -664,9 +1339,7 @@ void processInput(GLFWwindow* window)
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS) //shadow controls
-	{
 		bPressed = true;
-	}
 
 	if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE && bPressed)
 	{
@@ -713,187 +1386,44 @@ void processInput(GLFWwindow* window)
 	}
 }
 
-int main(int argc, char* argv[])
+void calculateCameraViewVector()
 {
-	// Initialize GLFW and OpenGL version
-	glfwInit();
+	pitch -= mouseYChange;
+	if (pitch > 89.0f)
+		pitch = 89.0f;
+	if (pitch < -89.0f)
+		pitch = -89.0f;
+	mouseXChange *= sensitivity;
+	yaw += mouseXChange;
 
-#if defined(PLATFORM_OSX)	
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#else
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-#endif
-
-	GLFWwindow* window = glfwCreateWindow(1024, 768, "Comp371 - Assignment 1", NULL, NULL);
-	if (window == NULL)
-	{
-		std::cerr << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
-	glfwMakeContextCurrent(window);
-//	glEnable(GL_CULL_FACE);
-	glEnable(GL_BLEND);
-	glEnable(GL_TEXTURE_2D);
-	// Initialize GLEW
-	glewExperimental = true; // Needed for core profile
-	if (glewInit() != GLEW_OK)
-	{
-		std::cerr << "Failed to create GLEW" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
-
-#if defined(PLATFORM_OSX)
-	brickTextureID = loadTexture("Textures/brick.jpg");
-	metalTextureID = loadTexture("Textures/metal.jpg");
-	tileTextureID = loadTexture("Textures/tile.png");
-	skyboxBack = loadTexture("Textures/SkyBoxBack.png");
-	skyboxBottom = loadTexture("Textures/SkyBoxBottom.png");
-	skyboxFront = loadTexture("Textures/SkyBoxFront.png");
-	skyboxLeft = loadTexture("Textures/SkyBoxLeft.png");
-	skyboxRight = loadTexture("Textures/SkyBoxRight.png");
-	skyboxTop = loadTexture("Textures/SkyBoxTop.png");
-#else
-	brickTextureID = loadTexture("../Assets/Textures/brick.jpg");
-	metalTextureID = loadTexture("../Assets/Textures/metal.jpg");
-	tileTextureID = loadTexture("../Assets/Textures/tile.png");
-	skyboxBack = loadTexture("../Assets/Textures/SkyBoxBack.png");
-	skyboxBottom = loadTexture("../Assets/Textures/SkyBoxBottom.png");
-	skyboxFront = loadTexture("../Assets/Textures/SkyBoxFront.png");
-	skyboxLeft = loadTexture("../Assets/Textures/SkyBoxLeft.png");
-	skyboxRight = loadTexture("../Assets/Textures/SkyBoxRight.png");
-	skyboxTop = loadTexture("../Assets/Textures/SkyBoxTop.png");
-#endif
-	glEnable(GL_CULL_FACE);
-
-	// Black background
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-	// General parameters
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_DEPTH_TEST);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwGetCursorPos(window, &lastMousePosX, &lastMousePosY);
-
-	// Compile and link shaders here ...
-	Shader mainShader("shape.vertexshader", "shape.fragmentshader");
-	Shader shadowShader("depth.vertexshader", "depth.fragmentshader");
-	
-	mainShader.use();
-	mainShader.setFloat("gridUnitLength", gridUnitLength);
-	mainShader.setBool("useTextures", useTextures);
-	
-	GLuint cubeVao = createCubeVao();
-	GLuint depthMapFBO = buildDepthMapFrameBuffer();
-
-	do
-	{
-		shapePositions = randomize();
-	} while (shapePositions.size() == 0);
-
-	// glowFBO = buildGlowFrameBuffer();
-	 
-	// Entering Main Loop
-	while (!glfwWindowShouldClose(window))
-	{
-		// Each frame, reset color of each pixel to glClearColor
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// Mouse movements
-		glfwGetCursorPos(window, &mousePosX, &mousePosY);
-
-		// Calculate the positional differences
-		mouseXChange = mousePosX - lastMousePosX;
-		mouseYChange = mousePosY - lastMousePosY;
-
-		lastMousePosX = mousePosX;
-		lastMousePosY = mousePosY;
-
-		mouseYChange *= sensitivity;
-		pitch -= mouseYChange;
-
-		if (pitch > 89.0f)
-			pitch = 89.0f;
-		if (pitch < -89.0f)
-			pitch = -89.0f;
-
-		mouseXChange *= sensitivity;
-		yaw += mouseXChange;
-		glm::vec3 direction;
-
-		// Processing input
-		processInput(window);
-		
-		direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		direction.y = sin(glm::radians(pitch));
-		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-		cameraFront = glm::normalize(direction);
-		cameraPos = glm::vec3(0.0f, 0.07f * 6.0f, 1.0f - shapeMovement * 0.07f);
-		mainShader.setBool("useTextures", false);
-		calculateShadows(shadowShader, mainShader, depthMapFBO, cubeVao, window);
-		
-		if (shapeMovement > 45.0f) 
-		{
-			shapeMovement = 0.0f;
-			do
-			{
-				shapePositions = randomize();
-			} while (shapePositions.size() == 0);
-		}
-		else 
-			shapeMovement += 0.10f;
-
-		// Display 
-		mainShader.use();
-		buildMatrices(mainShader);
-		mainShader.setVec3("viewPos", cameraPos);
-		mainShader.setBool("useTextures", useTextures);
-		mainShader.setBool("useShadows", useShadows);
-		
-		glBindVertexArray(cubeVao);
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, brickTextureID);
-		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
-		
-		displayWall(mainShader);
-		
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, metalTextureID);
-		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
-		displayShape(mainShader);
-
-		mainShader.setBool("useTextures", true);
-
-		// Background display
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		drawSkybox(mainShader);
-		
-		mainShader.setBool("useTextures", useTextures);
-
-		// End frame
-		glfwSwapBuffers(window);
-
-		// Detect inputs
-		glfwPollEvents();
-
-		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-			glfwSetWindowShouldClose(window, true);
-	}
-
-	// Shutdown GLFW
-	glfwTerminate();
-
-	return 0;
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(direction);
+	cameraPos = glm::vec3(0.0f, 0.07f * 6.0f, 1.0f - shapeMovement * 0.07f);
 }
 
-GLuint loadTexture(const char *filename) // From lab
+void setLevelParameters()
+{
+	switch (level % 3)
+	{
+	case 1:
+		numberOfCubesInWall = 5;
+		break;
+	case 2:
+		numberOfCubesInWall = 6;
+		break;
+	case 0:
+		numberOfCubesInWall = 7;
+		break;
+	default:
+		break;
+	}
+
+	shapeSpeed = 0.04f + ((level / 3) + 1) * 0.02f;
+}
+
+GLuint loadTexture(const char* filename) // From lab
 {
 	// Step1 Create and bind textures
 	GLuint textureId = 0;
@@ -908,7 +1438,7 @@ GLuint loadTexture(const char *filename) // From lab
 
 	// Step3 Load Textures with dimension data
 	int width, height, nrChannels;
-	unsigned char *data = stbi_load(filename, &width, &height, &nrChannels, 0);
+	unsigned char* data = stbi_load(filename, &width, &height, &nrChannels, 0);
 	if (!data)
 	{
 		std::cerr << "Error::Texture could not load texture file:" << filename << std::endl;
@@ -929,4 +1459,187 @@ GLuint loadTexture(const char *filename) // From lab
 	stbi_image_free(data);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	return textureId;
+}
+
+int main(int argc, char* argv[])
+{
+	// Initialize GLFW and OpenGL version
+	glfwInit();
+
+#if defined(PLATFORM_OSX)	
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#else
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+#endif
+
+	// Sets the main window
+	GLFWwindow* window = glfwCreateWindow(1024, 768, "Comp371 - Assignment 1", NULL, NULL);
+	if (window == NULL)
+	{
+		std::cerr << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+	glfwMakeContextCurrent(window);
+
+	// General parameters
+    glEnable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glEnable(GL_TEXTURE_2D);
+
+	// Initialize GLEW
+	glewExperimental = true; // Needed for core profile
+	if (glewInit() != GLEW_OK)
+	{
+		std::cerr << "Failed to create GLEW" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+
+#if defined(PLATFORM_OSX)
+	brickTextureID = loadTexture("Textures/brick.jpg");
+	metalTextureID = loadTexture("Textures/metal.jpg");
+	tileTextureID = loadTexture("Textures/tile.png");
+	skyboxBack = loadTexture("Textures/SkyboxBack.png");
+	skyboxBottom = loadTexture("Textures/SkyboxBottom.png");
+	skyboxFront = loadTexture("Textures/SkyboxFront.png");
+	skyboxLeft = loadTexture("Textures/SkyboxLeft.png");
+	skyboxRight = loadTexture("Textures/SkyboxRight.png");
+	skyboxTop = loadTexture("Textures/SkyboxTop.png");
+#else
+	brickTextureID = loadTexture("../Assets/Textures/brick.jpg");
+	metalTextureID = loadTexture("../Assets/Textures/metal.jpg");
+	tileTextureID = loadTexture("../Assets/Textures/tile.png");
+	skyboxBack = loadTexture("../Assets/Textures/SkyboxBack.png");
+	skyboxBottom = loadTexture("../Assets/Textures/SkyboxBottom.png");
+	skyboxFront = loadTexture("../Assets/Textures/SkyboxFront.png");
+	skyboxLeft = loadTexture("../Assets/Textures/SkyboxLeft.png");
+	skyboxRight = loadTexture("../Assets/Textures/SkyboxRight.png");
+	skyboxTop = loadTexture("../Assets/Textures/SkyboxTop.png");
+#endif
+
+	// Black background
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+	// General parameters
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_DEPTH_TEST);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwGetCursorPos(window, &lastMousePosX, &lastMousePosY);
+
+	// Compiles and links shaders
+	Shader mainShader("shape.vertexshader", "shape.fragmentshader");
+	Shader shadowShader("depth.vertexshader", "depth.fragmentshader");
+
+	// Shader parameters
+	mainShader.use();
+	mainShader.setFloat("gridUnitLength", gridUnitLength);
+	mainShader.setBool("useTextures", useTextures);
+	
+	// Creates array and buffer objects
+	GLuint cubeVao = createCubeVao();
+	GLuint depthMapFBO = buildDepthMapFrameBuffer();
+
+	// Shape and wall randomization
+	do
+	{
+		wallPositions = randomizeWall(numberOfCubesInWall);
+	} while (wallPositions.size() == 0);
+	do
+	{
+		shapePositions = randomizeShape();
+	} while (shapePositions.size() == 0);
+
+	// glowFBO = buildGlowFrameBuffer();
+	 
+	// Entering Main Loop
+	while (!glfwWindowShouldClose(window))
+	{
+		// Each frame, reset color of each pixel to glClearColor
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Mouse positional difference
+		glfwGetCursorPos(window, &mousePosX, &mousePosY);
+		mouseXChange = mousePosX - lastMousePosX;
+		mouseYChange = mousePosY - lastMousePosY;
+		lastMousePosX = mousePosX;
+		lastMousePosY = mousePosY;
+		mouseYChange *= sensitivity;
+
+		// Processing input
+		processInput(window);
+		rotateShapes(9);
+		
+		// Mouse movement
+		calculateCameraViewVector();
+
+		// Shadows
+		mainShader.setBool("useTextures", false);
+		calculateShadows(shadowShader, mainShader, depthMapFBO, cubeVao, window);
+
+		// Shape movement and randomization
+		if (shapeMovement > 45.0f) 
+		{
+			shapeMovement = 0.0f;
+			level += 1;
+			setLevelParameters();
+
+			do
+				wallPositions = randomizeWall(numberOfCubesInWall);
+			while (wallPositions.size() == 0);
+			do
+				shapePositions = randomizeShape();
+			while (shapePositions.size() == 0);
+		}
+		else 
+			shapeMovement += shapeSpeed;
+
+		// Display parameters
+		mainShader.use();
+		buildMatrices(mainShader);
+		mainShader.setVec3("viewPos", cameraPos);
+		mainShader.setBool("useTextures", useTextures);
+		mainShader.setBool("useShadows", useShadows);
+		
+		// Wall display
+		glBindVertexArray(cubeVao);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, brickTextureID);
+		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
+		displayWall(mainShader);
+		
+		// Shape display
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, metalTextureID);
+		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
+		displayShape(mainShader);
+		mainShader.setBool("useTextures", true);
+    
+		//Skybox display
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		drawSkybox(mainShader);
+		
+
+		mainShader.setBool("useTextures", useTextures);
+
+		// End frame
+		glfwSwapBuffers(window);
+
+		// Detect inputs
+		glfwPollEvents();
+
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+			glfwSetWindowShouldClose(window, true);
+	}
+
+	// Shutdown GLFW
+	glfwTerminate();
+
+	return 0;
 }
