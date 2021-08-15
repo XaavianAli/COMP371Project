@@ -1036,7 +1036,6 @@ void displayShape(Shader shader)
 		model = glm::translate(model, glm::vec3((-shapePositions[i].x) + centerX, -shapePositions[i].y + centerY, -shapePositions[i].z + centerZ));
 		model = glm::rotate(model, glm::radians(rotateShapeY + rotateRandomY), glm::vec3(0.0f, 1.0f, 0.0f));
 		model = glm::rotate(model, glm::radians(rotateShapeZ + rotateRandomZ), glm::vec3(0.0f, 0.0f, 1.0f));
-
 		model = glm::rotate(model, glm::radians(rotateShapeX + rotateRandomX), glm::vec3(1.0f, 0.0f, 0.0f));
 		
 	
@@ -1632,9 +1631,20 @@ int main(int argc, char* argv[])
 		calculateShadows(shadowShader, mainShader, depthMapFBO, cubeVao, window);
 
 		if (!levelBeaten) {
-			if (lround(rotateShapeX + rotateRandomX) % 360 == 0 && lround(rotateShapeY+rotateRandomY) % 360 == 0 && lround(rotateShapeZ+rotateRandomZ) % 360 == 0 && lround(rotateShapeZ + rotateRandomZ) % 360 == 0) {
-				levelBeaten = true;
-			}
+			glm::mat4 modelCheck = glm::mat4(1.0f);
+			modelCheck = glm::rotate(modelCheck, glm::radians(rotateShapeY + rotateRandomY), glm::vec3(0.0f, 1.0f, 0.0f));
+			modelCheck = glm::rotate(modelCheck, glm::radians(rotateShapeZ + rotateRandomZ), glm::vec3(0.0f, 0.0f, 1.0f));
+			modelCheck = glm::rotate(modelCheck, glm::radians(rotateShapeX + rotateRandomX), glm::vec3(1.0f, 0.0f, 0.0f));
+			glm::mat4 modelCheck2 = glm::mat4(1.0f);
+			levelBeaten = true;
+				for (int i = 0; i < 4; i++) {
+					for (int j = 0; j < 4; j++) {
+						if (round(modelCheck[i][j]) != round(modelCheck2[i][j])) levelBeaten = false;
+					}
+				}
+
+			
+
 		}
 		// Shape movement and randomization
 		if (shapeMovement > 45.0f)
