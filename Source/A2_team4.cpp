@@ -89,6 +89,20 @@ std::vector<glm::vec3> shapePositions;
 std::vector<glm::vec3> wallPositions;
 std::vector<glm::vec3> wallBounds;
 
+//Variables for smooth rotation
+bool rotatingXp = false;
+int rotateCounterXp = 0;
+bool rotatingXn = false;
+int rotateCounterXn = 0;
+bool rotatingYp = false;
+int rotateCounterYp = 0;
+bool rotatingYn = false;
+int rotateCounterYn = 0;
+bool rotatingZp = false;
+int rotateCounterZp = 0;
+bool rotatingZn = false;
+int rotateCounterZn = 0;
+
 // Levels parameters
 int numberOfCubesInWall = 5;
 int level = 1;
@@ -1100,6 +1114,58 @@ void calculateShadows(Shader shadowShader, Shader mainShader, GLuint depthMapFBO
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void rotateShapes(float x){
+
+	if (rotateCounterXp < 90 && rotatingXp){
+		rotateShapeX += x;
+		rotateCounterXp += x;
+	} else {
+		rotatingXp = false;
+		rotateCounterXp = 0;
+	}
+
+	if (rotateCounterXn < 90 && rotatingXn){
+		rotateShapeX -= x;
+		rotateCounterXn += x;
+	} else {
+		rotatingXn = false;
+		rotateCounterXn = 0;
+	}
+
+	if (rotateCounterYp < 90 && rotatingYp){
+		rotateShapeY += x;
+		rotateCounterYp += x;
+	} else {
+		rotatingYp = false;
+		rotateCounterYp = 0;
+	}
+
+	if (rotateCounterYn < 90 && rotatingYn){
+		rotateShapeY -= x;
+		rotateCounterYn += x;
+	} else {
+		rotatingYn = false;
+		rotateCounterYn = 0;
+	}
+
+	if (rotateCounterZp < 90 && rotatingZp){
+		rotateShapeZ += x;
+		rotateCounterZp += x;
+	} else {
+		rotatingZp = false;
+		rotateCounterZp = 0;
+	}
+
+	if (rotateCounterZn < 90 && rotatingZn){
+		rotateShapeZ -= x;
+		rotateCounterZn += x;
+	} else {
+		rotatingZn = false;
+		rotateCounterZn = 0;
+	}
+
+}
+
 void processInput(GLFWwindow* window)
 {
 	float currentFrame = glfwGetTime();
@@ -1135,13 +1201,14 @@ void processInput(GLFWwindow* window)
 		translateShapeZ = 0.0;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
 		aPressed = true;
+	}
 
 	if (aPressed && glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE)
 	{
 		aPressed = false;
-		rotateShapeY += 90;
+		rotatingYp = true;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
@@ -1150,7 +1217,7 @@ void processInput(GLFWwindow* window)
 	if (dPressed && glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE)
 	{
 		dPressed = false;
-		rotateShapeY -= 90;
+		rotatingYn = true;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -1159,7 +1226,7 @@ void processInput(GLFWwindow* window)
 	if (wPressed && glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE)
 	{
 		wPressed = false;
-		rotateShapeX += 90;
+		rotatingXn = true;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -1168,7 +1235,7 @@ void processInput(GLFWwindow* window)
 	if (sPressed && glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE)
 	{
 		sPressed = false;
-		rotateShapeX -= 90;
+		rotatingXp = true;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
@@ -1177,7 +1244,7 @@ void processInput(GLFWwindow* window)
 	if (qPressed && glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE)
 	{
 		qPressed = false;
-		rotateShapeZ += 90;
+		rotatingZp = true;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
@@ -1186,7 +1253,7 @@ void processInput(GLFWwindow* window)
 	if (ePressed && glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE)
 	{
 		ePressed = false;
-		rotateShapeZ -= 90;
+		rotatingZn = true;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) // Reset Shapes
@@ -1387,22 +1454,22 @@ int main(int argc, char* argv[])
 	brickTextureID = loadTexture("Textures/brick.jpg");
 	metalTextureID = loadTexture("Textures/metal.jpg");
 	tileTextureID = loadTexture("Textures/tile.png");
-	skyboxBack = loadTexture("Textures/SkyBoxBack.png");
-	skyboxBottom = loadTexture("Textures/SkyBoxBottom.png");
-	skyboxFront = loadTexture("Textures/SkyBoxFront.png");
-	skyboxLeft = loadTexture("Textures/SkyBoxLeft.png");
-	skyboxRight = loadTexture("Textures/SkyBoxRight.png");
-	skyboxTop = loadTexture("Textures/SkyBoxTop.png");
+	skyboxBack = loadTexture("Textures/SkyboxBack.png");
+	skyboxBottom = loadTexture("Textures/SkyboxBottom.png");
+	skyboxFront = loadTexture("Textures/SkyboxFront.png");
+	skyboxLeft = loadTexture("Textures/SkyboxLeft.png");
+	skyboxRight = loadTexture("Textures/SkyboxRight.png");
+	skyboxTop = loadTexture("Textures/SkyboxTop.png");
 #else
 	brickTextureID = loadTexture("../Assets/Textures/brick.jpg");
 	metalTextureID = loadTexture("../Assets/Textures/metal.jpg");
 	tileTextureID = loadTexture("../Assets/Textures/tile.png");
-	skyboxBack = loadTexture("../Assets/Textures/SkyBoxBack.png");
-	skyboxBottom = loadTexture("../Assets/Textures/SkyBoxBottom.png");
-	skyboxFront = loadTexture("../Assets/Textures/SkyBoxFront.png");
-	skyboxLeft = loadTexture("../Assets/Textures/SkyBoxLeft.png");
-	skyboxRight = loadTexture("../Assets/Textures/SkyBoxRight.png");
-	skyboxTop = loadTexture("../Assets/Textures/SkyBoxTop.png");
+	skyboxBack = loadTexture("../Assets/Textures/SkyboxBack.png");
+	skyboxBottom = loadTexture("../Assets/Textures/SkyboxBottom.png");
+	skyboxFront = loadTexture("../Assets/Textures/SkyboxFront.png");
+	skyboxLeft = loadTexture("../Assets/Textures/SkyboxLeft.png");
+	skyboxRight = loadTexture("../Assets/Textures/SkyboxRight.png");
+	skyboxTop = loadTexture("../Assets/Textures/SkyboxTop.png");
 #endif
 
 	// Black background
@@ -1456,6 +1523,7 @@ int main(int argc, char* argv[])
 
 		// Processing input
 		processInput(window);
+		rotateShapes(9);
 		
 		// Mouse movement
 		calculateCameraViewVector();
