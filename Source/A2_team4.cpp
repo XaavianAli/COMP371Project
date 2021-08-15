@@ -103,7 +103,6 @@ GLuint createCubeVao() // Taken from lab and modified
 		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f,
 		-0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f,
 
-
 		-0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 0.0f, 0.0f,//FRONT
 		 0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 1.0f, 0.0f,
 		 0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
@@ -125,7 +124,6 @@ GLuint createCubeVao() // Taken from lab and modified
 		 0.5f,  0.5f,  0.5f,  0.8f, 0.4f, 0.2f, 1.0f,  0.0f,  0.0f,  1.0f, 0.0f,
 		 0.5f, -0.5f,  0.5f,  0.8f, 0.4f, 0.2f, 1.0f,  0.0f,  0.0f, 0.0f, 0.0f,
 
-
 		-0.5f, -0.5f, -0.5f,  0.2f, 0.4f, 0.8f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f,//BOTTOM
 		 0.5f, -0.5f, -0.5f,  0.2f, 0.4f, 0.8f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f,
 		 0.5f, -0.5f,  0.5f,  0.2f, 0.4f, 0.8f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f,
@@ -139,21 +137,49 @@ GLuint createCubeVao() // Taken from lab and modified
 		 0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
 		-0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
 		-0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 0.0f,
+		
+		// Skybox Cube
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f,//a//BACK
+		 0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f,//b
+		 0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f,//c
+		 0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 1.0f,//c
+		-0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 1.0f,//d
+		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f,//a
 
+		-0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 0.0f, 0.0f,//a //FRONT
+		 0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 1.0f, 1.0f,//b
+		 0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 1.0f, 0.0f,//c
+		 0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 1.0f, 1.0f,//b
+		-0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 0.0f, 0.0f,//a
+		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 0.0f, 1.0f,//d
 
-		-0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 0.0f, 0.0f,//Background
-		 0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 1.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f,  0.0f,  1.0f, 0.0f, 0.0f,
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f,//a //LEFT
+		-0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f,//b
+		-0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f, -1.0f,  0.0f,  0.0f, 1.0f, 1.0f,//c
+		-0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f, -1.0f,  0.0f,  0.0f, 0.0f, 1.0f,//b
+		-0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f, -1.0f,  0.0f,  0.0f, 1.0f, 0.0f,//a
+		-0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f, -1.0f,  0.0f,  0.0f, 0.0f, 0.0f,//d
 
-		-0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 1.0f, //Floor
-		 0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 0.0f
+		 0.5f,  0.5f,  0.5f,  0.8f, 0.4f, 0.2f, 1.0f,  0.0f,  0.0f, 1.0f, 0.0f,//a //RIGHT
+		 0.5f,  0.5f, -0.5f,  0.8f, 0.4f, 0.2f, 1.0f,  0.0f,  0.0f, 1.0f, 1.0f,//b
+		 0.5f, -0.5f, -0.5f,  0.8f, 0.4f, 0.2f, 1.0f,  0.0f,  0.0f, 0.0f, 1.0f,//c
+		 0.5f, -0.5f, -0.5f,  0.8f, 0.4f, 0.2f, 1.0f,  0.0f,  0.0f, 0.0f, 1.0f,//c
+		 0.5f, -0.5f,  0.5f,  0.8f, 0.4f, 0.2f, 1.0f,  0.0f,  0.0f, 0.0f, 0.0f,//d
+		 0.5f,  0.5f,  0.5f,  0.8f, 0.4f, 0.2f, 1.0f,  0.0f,  0.0f, 1.0f, 0.0f,//a
+
+		-0.5f, -0.5f, -0.5f,  0.2f, 0.4f, 0.8f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f,//a //BOTTOM
+		 0.5f, -0.5f,  0.5f,  0.2f, 0.4f, 0.8f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f,//b
+		 0.5f, -0.5f, -0.5f,  0.2f, 0.4f, 0.8f,  0.0f, -1.0f,  0.0f, 1.0f, 1.0f,//c
+		 0.5f, -0.5f,  0.5f,  0.2f, 0.4f, 0.8f,  0.0f, -1.0f,  0.0f, 1.0f, 0.0f,//b
+		-0.5f, -0.5f, -0.5f,  0.2f, 0.4f, 0.8f,  0.0f, -1.0f,  0.0f, 0.0f, 1.0f,//a
+		-0.5f, -0.5f,  0.5f,  0.2f, 0.4f, 0.8f,  0.0f, -1.0f,  0.0f, 0.0f, 0.0f,//d
+
+		-0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 1.0f,//a //TOP
+		 0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 1.0f,//b
+		 0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,//c
+		 0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 1.0f, 0.0f,//c
+		-0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 0.0f,//d
+		-0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 1.0f//a
 	};
 
 	// Create a vertex array
@@ -358,26 +384,49 @@ void displayShape(Shader shader)
 		glDrawArrays(renderModeShape, 0, 36);
 	}
 }
-
-void displayFloor(Shader shader)
+void drawSkybox(Shader shader)
 {
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(-1.5f, -1.0f, 0.0f));
-		model = glm::scale(model, glm::vec3(10.0f, 0.0f, 10.0f));
-		shader.setMat4("model", model);
-
-		glDrawArrays(renderModeShape, 42, 6);
-}
-
-void displayBackground(Shader shader)
-{
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(-1.5f, 0.0f, -5.0f));
-		model = glm::scale(model, glm::vec3(10.0f, 10.0f, 0.0f));
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f));
+	model = glm::scale(model, glm::vec3(20.0f, 20.0f, 20.0f));
 	
-		shader.setMat4("model", model);
+	shader.setMat4("model", model);
 
-		glDrawArrays(renderModeShape, 36, 6);
+	// Draw back
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, skyboxBack);
+	glUniform1i(glGetUniformLocation(shader.ID, "ourTexture"), 2);
+	glDrawArrays(GL_TRIANGLES, 36, 6);
+
+	// Draw Front
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, skyboxFront);
+	glUniform1i(glGetUniformLocation(shader.ID, "ourTexture"), 2);
+	glDrawArrays(GL_TRIANGLES, 42, 6);
+
+	// Draw Left
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, skyboxLeft);
+	glUniform1i(glGetUniformLocation(shader.ID, "ourTexture"), 2);
+	glDrawArrays(GL_TRIANGLES, 48, 6);
+
+	// Draw Right
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, skyboxRight);
+	glUniform1i(glGetUniformLocation(shader.ID, "ourTexture"), 2);
+	glDrawArrays(GL_TRIANGLES, 54, 6);
+
+	// Draw Bottom
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, skyboxBottom);
+	glUniform1i(glGetUniformLocation(shader.ID, "ourTexture"), 2);
+	glDrawArrays(GL_TRIANGLES, 60, 6);
+
+	// Draw Top
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, skyboxTop);
+	glUniform1i(glGetUniformLocation(shader.ID, "ourTexture"), 2);
+	glDrawArrays(GL_TRIANGLES, 66, 6);
 }
 
 void displayWall(Shader shader)
@@ -821,19 +870,11 @@ int main(int argc, char* argv[])
 
 		mainShader.setBool("useTextures", true);
 
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, skyboxFront);
-		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
+		// Background display
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		displayFloor(mainShader);
-
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, skyboxBottom);
-		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		displayBackground(mainShader);
+		drawSkybox(mainShader);
+		
 		mainShader.setBool("useTextures", useTextures);
 
 		// End frame
