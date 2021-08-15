@@ -85,6 +85,9 @@ float scaleShape = 1.0f;
 float rotateShapeX = 0.0f;
 float rotateShapeY = 0.0f;
 float rotateShapeZ = 0.0f;
+float rotateRandomX = 0.0f;
+float rotateRandomY = 0.0f;
+float rotateRandomZ = 0.0f;
 std::vector<glm::vec3> shapePositions;
 std::vector<glm::vec3> wallPositions;
 std::vector<glm::vec3> wallBounds;
@@ -105,9 +108,9 @@ int rotateCounterZn = 0;
 
 // Levels parameters
 int numberOfCubesInWall = 5;
-int level = 1;
+int level = 0;
 float shapeSpeed = 0.04f;
-
+bool levelBeaten = false;
 // To only rotate once 
 bool rotateShape = false;
 bool glowingObjects = false;
@@ -157,7 +160,7 @@ GLuint createCubeVao() // Taken from lab and modified
 		 0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f,  1.0f, 0.0f,
 		-0.5f,  0.5f, -0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f,  0.0f, 1.0f,
 		-0.5f,  0.5f,  0.5f,  0.5f, 0.5f, 0.5f, 0.0f,  1.0f,  0.0f, 0.0f, 0.0f,
-		
+
 		// Skybox Cube
 		-0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f,//a//BACK
 		 0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.0f,  0.0f,  0.0f, -1.0f, 1.0f, 0.0f,//b
@@ -262,7 +265,6 @@ GLuint createCubeVao() // Taken from lab and modified
 
 	return vertexArrayObject;
 }
-
 void buildMatrices(Shader shader)
 {
 	glm::mat4 model = glm::mat4(1.0f);
@@ -762,21 +764,6 @@ bool boundsAreSymmetric(std::vector<glm::vec3> wallBounds)
 	{
 		std::sort(symmetricBounds[i].begin(), symmetricBounds[i].end(),
 			[](const glm::vec3& lhs, const glm::vec3& rhs)
-			{
-				if (lhs.x == rhs.x)
-				{
-					if (lhs.y == rhs.y)
-						return lhs.z < rhs.z;
-
-					return lhs.y < rhs.y;
-				}
-
-				return lhs.x < rhs.x;
-			});
-	}
-
-	std::sort(translatedBounds.begin(), translatedBounds.end(),
-		[](const glm::vec3& lhs, const glm::vec3& rhs)
 		{
 			if (lhs.x == rhs.x)
 			{
@@ -788,6 +775,21 @@ bool boundsAreSymmetric(std::vector<glm::vec3> wallBounds)
 
 			return lhs.x < rhs.x;
 		});
+	}
+
+	std::sort(translatedBounds.begin(), translatedBounds.end(),
+		[](const glm::vec3& lhs, const glm::vec3& rhs)
+	{
+		if (lhs.x == rhs.x)
+		{
+			if (lhs.y == rhs.y)
+				return lhs.z < rhs.z;
+
+			return lhs.y < rhs.y;
+		}
+
+		return lhs.x < rhs.x;
+	});
 
 	bool symmetryFound = false;
 	for (int i = 0; i < symmetricBounds.size(); i++)
@@ -984,7 +986,7 @@ std::vector<glm::vec3> randomizeWall(int numberOfCubes)
 
 	std::vector<glm::vec3> wallPos;
 	std::vector<glm::vec3> posDiff;
-	
+
 	for (int i = 0; i < innerPositions.size(); i++)
 	{
 		if (std::find(randomPos.begin(), randomPos.end(), innerPositions[i]) == randomPos.end())
@@ -1007,7 +1009,7 @@ void displayShape(Shader shader)
 	float minY = 100.0f;
 	float maxY = -100.0f;
 	float minZ = 100.0f;
-	float maxZ = - 100.0f;
+	float maxZ = -100.0f;
 
 	for (glm::vec3 shape : shapePositions) {
 		if (shape.x < minX) minX = shape.x;
@@ -1017,45 +1019,48 @@ void displayShape(Shader shader)
 		if (shape.z < minZ) minZ = shape.z;
 		if (shape.z > maxZ) maxZ = shape.z;
 	}
-	
-	float centerX = (maxX - minX)/2 + minX;
-	float centerY = (maxY - minY)/2 + minY;
-	float centerZ = (maxZ - minZ)/2 + minZ;
+
+	float centerX = (maxX - minX) / 2 + minX;
+	float centerY = (maxY - minY) / 2 + minY;
+	float centerZ = (maxZ - minZ) / 2 + minZ;
 
 	for (int i = 0; i < 9; i++)
 	{
 		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3((0.0f + translateShapeX) * 0.07f, (0.0f + translateShapeY) * 0.07f, (0.0f + translateShapeZ - shapeMovement) * 0.07f));
-	
+		model = glm::translate(model, glm::vec3((0.0f + translateShapeX) * 0.07f, (0.0f + translateShapeY) * 0.07f, (1.0f + translateShapeZ - shapeMovement - minZ) * 0.07f)); 
+
 		model = glm::scale(model, glm::vec3(0.07f * scaleShape, 0.07f * scaleShape, 0.07f * scaleShape));
 		model = glm::translate(model, shapePositions[i]);
+
+
+		model = glm::translate(model, glm::vec3((-shapePositions[i].x) + centerX, -shapePositions[i].y + centerY, -shapePositions[i].z + centerZ));
+		model = glm::rotate(model, glm::radians(rotateShapeY + rotateRandomY), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(rotateShapeZ + rotateRandomZ), glm::vec3(0.0f, 0.0f, 1.0f));
+
+		model = glm::rotate(model, glm::radians(rotateShapeX + rotateRandomX), glm::vec3(1.0f, 0.0f, 0.0f));
+		
+	
 	
 		
-		model = glm::translate(model, glm::vec3(( -shapePositions[i].x) + centerX, -shapePositions[i].y + centerY, -shapePositions[i].z + centerZ));
+
+		model = glm::translate(model, glm::vec3((shapePositions[i].x - centerX), shapePositions[i].y - centerY, shapePositions[i].z - centerZ));
 
 
-		model = glm::rotate(model, glm::radians(rotateShapeZ), glm::vec3(0.0f, 0.0f, 1.0f));
-		model = glm::rotate(model, glm::radians(rotateShapeY), glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(rotateShapeX), glm::vec3(1.0f, 0.0f, 0.0f));
 
-			model = glm::translate(model, glm::vec3(( shapePositions[i].x - centerX ), shapePositions[i].y - centerY, shapePositions[i].z - centerZ));
 
-		
-
-	
 		shader.setMat4("model", model);
 
 		glDrawArrays(renderModeShape, 0, 36);
 	}
 }
+
 void drawSkybox(Shader shader)
 {
 	glm::mat4 model = glm::mat4(1.0f);
 
 	model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f));
-	model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	model = glm::scale(model, glm::vec3(20.0f, 20.0f, 20.0f));
-	
+
 	shader.setMat4("model", model);
 
 	// Draw back
@@ -1095,13 +1100,14 @@ void drawSkybox(Shader shader)
 	glDrawArrays(GL_TRIANGLES, 66, 6);
 }
 
+
 void displayWall(Shader shader)
 {
 	for (int i = 0; i < wallPositions.size(); i++)
 	{
 		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::scale(model, glm::vec3(0.07f, 0.07f, 0.03f));
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, -100.0f + wallMovement));
+		model = glm::scale(model, glm::vec3(0.07f, 0.07f, 0.07f));
+		model = glm::translate(model, glm::vec3(0.0f, 0.0f, -45.0f));
 		model = glm::translate(model, wallPositions[i]);
 		model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
@@ -1155,62 +1161,68 @@ void calculateShadows(Shader shadowShader, Shader mainShader, GLuint depthMapFBO
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	glBindVertexArray(vao);
-	
+
 	displayWall(shadowShader);
 	displayShape(shadowShader);
-	
+
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
 	glViewport(0, 0, width, height);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void rotateShapes(float x){
+void rotateShapes(float x) {
 
-	if (rotateCounterXp < 90 && rotatingXp){
+	if (rotateCounterXp < 89 && rotatingXp) {
 		rotateShapeX += x;
 		rotateCounterXp += x;
-	} else {
+	}
+	else {
 		rotatingXp = false;
 		rotateCounterXp = 0;
 	}
 
-	if (rotateCounterXn < 90 && rotatingXn){
+	if (rotateCounterXn < 89 && rotatingXn) {
 		rotateShapeX -= x;
 		rotateCounterXn += x;
-	} else {
+	}
+	else {
 		rotatingXn = false;
 		rotateCounterXn = 0;
 	}
 
-	if (rotateCounterYp < 90 && rotatingYp){
+	if (rotateCounterYp < 89 && rotatingYp) {
 		rotateShapeY += x;
 		rotateCounterYp += x;
-	} else {
+	}
+	else {
 		rotatingYp = false;
 		rotateCounterYp = 0;
 	}
 
-	if (rotateCounterYn < 90 && rotatingYn){
+	if (rotateCounterYn < 89 && rotatingYn) {
 		rotateShapeY -= x;
 		rotateCounterYn += x;
-	} else {
+	}
+	else {
 		rotatingYn = false;
 		rotateCounterYn = 0;
 	}
 
-	if (rotateCounterZp < 90 && rotatingZp){
+	if (rotateCounterZp < 89 && rotatingZp) {
 		rotateShapeZ += x;
 		rotateCounterZp += x;
-	} else {
+	}
+	else {
 		rotatingZp = false;
 		rotateCounterZp = 0;
 	}
 
-	if (rotateCounterZn < 90 && rotatingZn){
+	if (rotateCounterZn < 89 && rotatingZn) {
 		rotateShapeZ -= x;
 		rotateCounterZn += x;
-	} else {
+	}
+	else {
 		rotatingZn = false;
 		rotateCounterZn = 0;
 	}
@@ -1244,7 +1256,7 @@ void processInput(GLFWwindow* window)
 	}
 
 	// Shape Reset
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) 
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
 		renderModeShape = GL_TRIANGLES;
 		translateShapeX = 0.0;
@@ -1252,7 +1264,7 @@ void processInput(GLFWwindow* window)
 		translateShapeZ = 0.0;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
+	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		aPressed = true;
 	}
 
@@ -1262,7 +1274,7 @@ void processInput(GLFWwindow* window)
 		rotatingYp = true;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		dPressed = true;
 
 	if (dPressed && glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE)
@@ -1271,7 +1283,7 @@ void processInput(GLFWwindow* window)
 		rotatingYn = true;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		wPressed = true;
 
 	if (wPressed && glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE)
@@ -1280,7 +1292,7 @@ void processInput(GLFWwindow* window)
 		rotatingXn = true;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 		sPressed = true;
 
 	if (sPressed && glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE)
@@ -1289,7 +1301,7 @@ void processInput(GLFWwindow* window)
 		rotatingXp = true;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
 		qPressed = true;
 
 	if (qPressed && glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE)
@@ -1298,7 +1310,7 @@ void processInput(GLFWwindow* window)
 		rotatingZp = true;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 		ePressed = true;
 
 	if (ePressed && glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE)
@@ -1349,7 +1361,7 @@ void processInput(GLFWwindow* window)
 		else useShadows = true;
 	}
 
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS) 
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
 	{
 		mouseYChange *= sensitivity;
 		pitch -= mouseYChange;
@@ -1365,7 +1377,7 @@ void processInput(GLFWwindow* window)
 		cameraFront = glm::normalize(direction);
 	}
 
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) 
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
 	{
 		mouseXChange *= sensitivity;
 		yaw += mouseXChange;
@@ -1377,7 +1389,7 @@ void processInput(GLFWwindow* window)
 
 	}
 
-	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) 
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 	{
 		fov += (float)mouseYChange;
 		if (fov < 1.0f)
@@ -1422,6 +1434,41 @@ void setLevelParameters()
 	}
 
 	shapeSpeed = 0.04f + ((level / 3) + 1) * 0.02f;
+}
+
+void randomizeRotations() {
+
+	
+
+	int randZ = rand() % 3;
+	int randX = rand() % 3;
+	int randY = rand() & 3;
+	switch (randZ) {
+	case 0: rotateRandomZ = 90.0f;
+		break;
+	case 1: rotateRandomZ = 180.0f;
+		break;
+	case 2: rotateRandomZ = 270.0f;
+		break;
+	}
+
+	switch (randX) {
+	case 0: rotateRandomX = 90.0f;
+		break;
+	case 1: rotateRandomX = 180.0f;
+		break;
+	case 2: rotateRandomX = 270.0f;
+		break;
+	}
+
+	switch (randY) {
+	case 0: rotateRandomY = 90.0f;
+		break;
+	case 1: rotateRandomY = 180.0f;
+		break;
+	case 2: rotateRandomY = 270.0f;
+		break;
+	}
 }
 
 GLuint loadTexture(const char* filename) // From lab
@@ -1478,7 +1525,7 @@ int main(int argc, char* argv[])
 #endif
 
 	// Sets the main window
-	GLFWwindow* window = glfwCreateWindow(1024, 768, "Comp371 - Assignment 1", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(1024, 768, "Comp371 - Project", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cerr << "Failed to create GLFW window" << std::endl;
@@ -1488,7 +1535,7 @@ int main(int argc, char* argv[])
 	glfwMakeContextCurrent(window);
 
 	// General parameters
-    glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 	glEnable(GL_BLEND);
 	glEnable(GL_TEXTURE_2D);
 
@@ -1541,7 +1588,7 @@ int main(int argc, char* argv[])
 	mainShader.use();
 	mainShader.setFloat("gridUnitLength", gridUnitLength);
 	mainShader.setBool("useTextures", useTextures);
-	
+
 	// Creates array and buffer objects
 	GLuint cubeVao = createCubeVao();
 	GLuint depthMapFBO = buildDepthMapFrameBuffer();
@@ -1555,9 +1602,9 @@ int main(int argc, char* argv[])
 	{
 		shapePositions = randomizeShape();
 	} while (shapePositions.size() == 0);
-
+	randomizeRotations();
 	// glowFBO = buildGlowFrameBuffer();
-	 
+
 	// Entering Main Loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -1573,23 +1620,40 @@ int main(int argc, char* argv[])
 		mouseYChange *= sensitivity;
 
 		// Processing input
+		
 		processInput(window);
 		rotateShapes(9);
-		
+
 		// Mouse movement
 		calculateCameraViewVector();
-
+		
 		// Shadows
 		mainShader.setBool("useTextures", false);
 		calculateShadows(shadowShader, mainShader, depthMapFBO, cubeVao, window);
 
+		if (!levelBeaten) {
+			if (lround(rotateShapeX + rotateRandomX) % 360 == 0 && lround(rotateShapeY+rotateRandomY) % 360 == 0 && lround(rotateShapeZ+rotateRandomZ) % 360 == 0 && lround(rotateShapeZ + rotateRandomZ) % 360 == 0) {
+				levelBeaten = true;
+			}
+		}
 		// Shape movement and randomization
-		if (shapeMovement > 45.0f) 
+		if (shapeMovement > 45.0f)
 		{
+			rotatingXn = false;
+			rotatingYn = false;
+			rotatingZn = false;
+			rotatingXp = false;
+			rotatingYp = false;
+			rotatingYp = false;
+		
 			shapeMovement = 0.0f;
-			level += 1;
+			if(levelBeaten) level += 1;
+			levelBeaten = false;
 			setLevelParameters();
-
+			randomizeRotations();
+			rotateShapeX = 0.0f;
+			rotateShapeY = 0.0f;
+			rotateShapeZ = 0.0f;
 			do
 				wallPositions = randomizeWall(numberOfCubesInWall);
 			while (wallPositions.size() == 0);
@@ -1597,8 +1661,10 @@ int main(int argc, char* argv[])
 				shapePositions = randomizeShape();
 			while (shapePositions.size() == 0);
 		}
-		else 
-			shapeMovement += shapeSpeed;
+		else
+			if (levelBeaten) {
+				shapeMovement += 3 * shapeSpeed; //speed up on level beaten.
+			}else shapeMovement +=  shapeSpeed;
 
 		// Display parameters
 		mainShader.use();
@@ -1606,26 +1672,25 @@ int main(int argc, char* argv[])
 		mainShader.setVec3("viewPos", cameraPos);
 		mainShader.setBool("useTextures", useTextures);
 		mainShader.setBool("useShadows", useShadows);
-		
+
 		// Wall display
 		glBindVertexArray(cubeVao);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, brickTextureID);
 		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
 		displayWall(mainShader);
-		
+
 		// Shape display
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, metalTextureID);
 		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
 		displayShape(mainShader);
 		mainShader.setBool("useTextures", true);
-    
+
 		//Skybox display
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		drawSkybox(mainShader);
-		
 
 		mainShader.setBool("useTextures", useTextures);
 
