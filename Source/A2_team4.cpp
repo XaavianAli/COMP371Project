@@ -2024,7 +2024,7 @@ int main(int argc, char* argv[])
 
 	ISoundEngine* SoundEngine = createIrrKlangDevice();
 
-	SoundEngine->play2D("../audio/audio_signals.mp3", true);
+	SoundEngine->play2D("../audio/audio_signals.wav", true);
 
 
 
