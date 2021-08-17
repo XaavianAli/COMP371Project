@@ -15,6 +15,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h" //image loading library from https://github.com/nothings/stb
 
+
 // Sound Engine
 #include "irrKlang/irrKlang.h"
 using namespace irrklang;
@@ -26,6 +27,7 @@ float lastFrame = 0.0f;
 float gridUnitLength = 0.01953125f;
 float shapeMovement = 0.0f;
 float wallMovement = 0.0f;
+double totalTime = 120.0; //Change this to change time of game play (in seconds).
 glm::vec3 direction;
 
 // Camera parameters
@@ -45,6 +47,18 @@ double mousePosX, mousePosY;
 double lastMousePosX, lastMousePosY;
 double mouseXChange;
 double mouseYChange;
+bool startGame = true;
+bool playGame = false;
+bool endGame = false;
+bool startScreen = true;
+bool gameScreen = false;
+bool endScreen = false;
+double currentTime;
+double deltaTime2;
+double timeLeft;
+
+
+
 
 // Stores rendering modes, default is triangles
 GLenum renderModeShape = GL_TRIANGLES;
@@ -80,6 +94,7 @@ GLuint skyboxFront;
 GLuint skyboxLeft;
 GLuint skyboxRight;
 GLuint skyboxTop;
+GLuint font;
 
 // Shape transformations
 float translateShapeX = 0.0f;
@@ -1031,7 +1046,7 @@ void displayShape(Shader shader)
 	for (int i = 0; i < 9; i++)
 	{
 		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3((0.0f + translateShapeX) * 0.07f, (0.0f + translateShapeY) * 0.07f, (1.0f + translateShapeZ - shapeMovement - minZ) * 0.07f)); 
+		model = glm::translate(model, glm::vec3((0.0f + translateShapeX) * 0.07f, (0.0f + translateShapeY) * 0.07f, (1.0f + translateShapeZ - shapeMovement - minZ) * 0.07f));
 
 		model = glm::scale(model, glm::vec3(0.07f * scaleShape, 0.07f * scaleShape, 0.07f * scaleShape));
 		model = glm::translate(model, shapePositions[i]);
@@ -1041,10 +1056,10 @@ void displayShape(Shader shader)
 		model = glm::rotate(model, glm::radians(rotateShapeY + rotateRandomY), glm::vec3(0.0f, 1.0f, 0.0f));
 		model = glm::rotate(model, glm::radians(rotateShapeZ + rotateRandomZ), glm::vec3(0.0f, 0.0f, 1.0f));
 		model = glm::rotate(model, glm::radians(rotateShapeX + rotateRandomX), glm::vec3(1.0f, 0.0f, 0.0f));
-		
-	
-	
-		
+
+
+
+
 
 		model = glm::translate(model, glm::vec3((shapePositions[i].x - centerX), shapePositions[i].y - centerY, shapePositions[i].z - centerZ));
 
@@ -1061,7 +1076,6 @@ void drawSkybox(Shader shader)
 {
 	glm::mat4 model = glm::mat4(1.0f);
 
-	model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	model = glm::translate(model, glm::vec3(0.0f, 0.0f, -1.0f));
 	model = glm::scale(model, glm::vec3(20.0f, 20.0f, 20.0f));
 
@@ -1259,6 +1273,20 @@ void processInput(GLFWwindow* window)
 		fov = 45.0f;
 	}
 
+	if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS)
+	{
+		if (startScreen = true) {
+			startScreen = false;
+			gameScreen = true;
+			startGame = true;
+		}
+		if (endScreen = true) {
+			endScreen = false;
+			startGame = true;
+			gameScreen = true;
+		}
+	}
+
 	// Shape Reset
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
@@ -1442,7 +1470,7 @@ void setLevelParameters()
 
 void randomizeRotations() {
 
-	
+
 
 	int randZ = rand() % 3;
 	int randX = rand() % 3;
@@ -1513,6 +1541,388 @@ GLuint loadTexture(const char* filename) // From lab
 	return textureId;
 }
 
+GLuint createTextVao(float x1, float y1, float x2, float y2, float s)
+{
+	// A vertex is a point on a polygon, it contains positions and other data (eg: colors)
+	float vertexArray[] = {
+		-0.1f * s, -0.1f * s,  0.0f,  1.0f,  0.0f,  1.0f,  x1,  y2,
+		 0.1f * s, -0.1f * s,  0.0f,  1.0f,  0.0f,  1.0f,  x2,  y2,
+		-0.1f * s,  0.1f * s,  0.0f,  1.0f,  0.0f,  1.0f,  x1,  y1,
+		 0.1f * s, -0.1f * s,  0.0f,  1.0f,  0.0f,  1.0f,  x2,  y2,
+		 0.1f * s,  0.1f * s,  0.0f,  1.0f,  0.0f,  1.0f,  x2,  y1,
+		-0.1f * s,  0.1f * s,  0.0f,  1.0f,  0.0f,  1.0f,  x1,  y1,
+	};
+
+	// Create a vertex array
+	GLuint vertexArrayObject;
+	glGenVertexArrays(1, &vertexArrayObject);
+	glBindVertexArray(vertexArrayObject);
+
+
+	// Upload Vertex Buffer to the GPU, keep a reference to it (vertexBufferObject)
+	GLuint vertexBufferObject;
+	glGenBuffers(1, &vertexBufferObject);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexArray), vertexArray, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0,                   // attribute 0 matches aPos in Vertex Shader
+		2,                   // size
+		GL_FLOAT,            // type
+		GL_FALSE,            // normalized?
+		8 * sizeof(float), // stride - each vertex contain 2 vec3 (position, color)
+		(void*)0             // array buffer offset
+	);
+	glEnableVertexAttribArray(0);
+
+
+	glVertexAttribPointer(1,                            // attribute 1 matches aColor in Vertex Shader
+		4,
+		GL_FLOAT,
+		GL_FALSE,
+		8 * sizeof(float),
+		(void*)(sizeof(float) * 2)      // color is offseted a vec3 (comes after position)
+	);
+	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2,                            // attribute 1 matches aColor in Vertex Shader
+		2,
+		GL_FLOAT,
+		GL_FALSE,
+		8 * sizeof(float),
+		(void*)(sizeof(float) * 6)      // color is offseted a vec3 (comes after position)
+	);
+	glEnableVertexAttribArray(2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	return vertexArrayObject;
+}
+
+void displayText(Shader shader, std::string text, glm::vec2 loc, float s) {
+
+	//Function to display text. the vec2 parameter is the location on the screen to start displaying the string
+
+	float x1, x2, y1, y2;
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, font);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glUniform1i(glGetUniformLocation(shader.ID, "font"), 2);
+
+	for (int i = 0; i < text.length(); i++) {
+
+		switch (text[i]) {
+		case 'A':
+			x1 = 0.0; x2 = 0.1; y1 = 0.0; y2 = 0.1;
+			break;
+		case 'B':
+			x1 = 0.1; x2 = 0.2; y1 = 0.0; y2 = 0.1;
+			break;
+		case 'C':
+			x1 = 0.2; x2 = 0.3; y1 = 0.0; y2 = 0.1;
+			break;
+		case 'D':
+			x1 = 0.3; x2 = 0.4; y1 = 0.0; y2 = 0.1;
+			break;
+		case 'E':
+			x1 = 0.4; x2 = 0.5; y1 = 0.0; y2 = 0.1;
+			break;
+		case 'F':
+			x1 = 0.5; x2 = 0.6; y1 = 0.0; y2 = 0.1;
+			break;
+		case 'G':
+			x1 = 0.6; x2 = 0.7; y1 = 0.0; y2 = 0.1;
+			break;
+		case 'H':
+			x1 = 0.7; x2 = 0.8; y1 = 0.0; y2 = 0.1;
+			break;
+		case 'I':
+			x1 = 0.8; x2 = 0.9; y1 = 0.0; y2 = 0.1;
+			break;
+		case 'J':
+			x1 = 0.9; x2 = 1.0; y1 = 0.0; y2 = 0.1;
+			break;
+		case 'K':
+			x1 = 0.0; x2 = 0.1; y1 = 0.1; y2 = 0.2;
+			break;
+		case 'L':
+			x1 = 0.1; x2 = 0.2; y1 = 0.1; y2 = 0.2;
+			break;
+		case 'M':
+			x1 = 0.2; x2 = 0.3; y1 = 0.1; y2 = 0.2;
+			break;
+		case 'N':
+			x1 = 0.3; x2 = 0.4; y1 = 0.1; y2 = 0.2;
+			break;
+		case 'O':
+			x1 = 0.4; x2 = 0.5; y1 = 0.1; y2 = 0.2;
+			break;
+		case 'P':
+			x1 = 0.5; x2 = 0.6; y1 = 0.1; y2 = 0.2;
+			break;
+		case 'Q':
+			x1 = 0.6; x2 = 0.7; y1 = 0.1; y2 = 0.2;
+			break;
+		case 'R':
+			x1 = 0.7; x2 = 0.8; y1 = 0.1; y2 = 0.2;
+			break;
+		case 'S':
+			x1 = 0.8; x2 = 0.9; y1 = 0.1; y2 = 0.2;
+			break;
+		case 'T':
+			x1 = 0.9; x2 = 1.0; y1 = 0.1; y2 = 0.2;
+			break;
+		case 'U':
+			x1 = 0.0; x2 = 0.1; y1 = 0.2; y2 = 0.3;
+			break;
+		case 'V':
+			x1 = 0.1; x2 = 0.2; y1 = 0.2; y2 = 0.3;
+			break;
+		case 'W':
+			x1 = 0.2; x2 = 0.3; y1 = 0.2; y2 = 0.3;
+			break;
+		case 'X':
+			x1 = 0.3; x2 = 0.4; y1 = 0.2; y2 = 0.3;
+			break;
+		case 'Y':
+			x1 = 0.4; x2 = 0.5; y1 = 0.2; y2 = 0.3;
+			break;
+		case 'Z':
+			x1 = 0.5; x2 = 0.6; y1 = 0.2; y2 = 0.3;
+			break;
+		case 'a':
+			x1 = 0.6; x2 = 0.7; y1 = 0.2; y2 = 0.3;
+			break;
+		case 'b':
+			x1 = 0.7; x2 = 0.8; y1 = 0.2; y2 = 0.3;
+			break;
+		case 'c':
+			x1 = 0.8; x2 = 0.9; y1 = 0.2; y2 = 0.3;
+			break;
+		case 'd':
+			x1 = 0.9; x2 = 1.0; y1 = 0.2; y2 = 0.3;
+			break;
+		case 'e':
+			x1 = 0.0; x2 = 0.1; y1 = 0.3; y2 = 0.4;
+			break;
+		case 'f':
+			x1 = 0.1; x2 = 0.2; y1 = 0.3; y2 = 0.4;
+			break;
+		case 'g':
+			x1 = 0.2; x2 = 0.3; y1 = 0.3; y2 = 0.4;
+			break;
+		case 'h':
+			x1 = 0.3; x2 = 0.4; y1 = 0.3; y2 = 0.4;
+			break;
+		case 'i':
+			x1 = 0.4; x2 = 0.5; y1 = 0.3; y2 = 0.4;
+			break;
+		case 'j':
+			x1 = 0.5; x2 = 0.6; y1 = 0.3; y2 = 0.4;
+			break;
+		case 'k':
+			x1 = 0.6; x2 = 0.7; y1 = 0.3; y2 = 0.4;
+			break;
+		case 'l':
+			x1 = 0.7; x2 = 0.8; y1 = 0.3; y2 = 0.4;
+			break;
+		case 'm':
+			x1 = 0.8; x2 = 0.9; y1 = 0.3; y2 = 0.4;
+			break;
+		case 'n':
+			x1 = 0.9; x2 = 1.0; y1 = 0.3; y2 = 0.4;
+			break;
+		case 'o':
+			x1 = 0.0; x2 = 0.1; y1 = 0.4; y2 = 0.5;
+			break;
+		case 'p':
+			x1 = 0.1; x2 = 0.2; y1 = 0.4; y2 = 0.5;
+			break;
+		case 'q':
+			x1 = 0.2; x2 = 0.3; y1 = 0.4; y2 = 0.5;
+			break;
+		case 'r':
+			x1 = 0.3; x2 = 0.4; y1 = 0.4; y2 = 0.5;
+			break;
+		case 's':
+			x1 = 0.4; x2 = 0.5; y1 = 0.4; y2 = 0.5;
+			break;
+		case 't':
+			x1 = 0.5; x2 = 0.6; y1 = 0.4; y2 = 0.5;
+			break;
+		case 'u':
+			x1 = 0.6; x2 = 0.7; y1 = 0.4; y2 = 0.5;
+			break;
+		case 'v':
+			x1 = 0.7; x2 = 0.8; y1 = 0.4; y2 = 0.5;
+			break;
+		case 'w':
+			x1 = 0.8; x2 = 0.9; y1 = 0.4; y2 = 0.5;
+			break;
+		case 'x':
+			x1 = 0.9; x2 = 1.0; y1 = 0.4; y2 = 0.5;
+			break;
+		case 'y':
+			x1 = 0.0; x2 = 0.1; y1 = 0.5; y2 = 0.6;
+			break;
+		case 'z':
+			x1 = 0.1; x2 = 0.2; y1 = 0.5; y2 = 0.6;
+			break;
+		case '0':
+			x1 = 0.2; x2 = 0.3; y1 = 0.5; y2 = 0.6;
+			break;
+		case '1':
+			x1 = 0.3; x2 = 0.4; y1 = 0.5; y2 = 0.6;
+			break;
+		case '2':
+			x1 = 0.4; x2 = 0.5; y1 = 0.5; y2 = 0.6;
+			break;
+		case '3':
+			x1 = 0.5; x2 = 0.6; y1 = 0.5; y2 = 0.6;
+			break;
+		case '4':
+			x1 = 0.6; x2 = 0.7; y1 = 0.5; y2 = 0.6;
+			break;
+		case '5':
+			x1 = 0.7; x2 = 0.8; y1 = 0.5; y2 = 0.6;
+			break;
+		case '6':
+			x1 = 0.8; x2 = 0.9; y1 = 0.5; y2 = 0.6;
+			break;
+		case '7':
+			x1 = 0.9; x2 = 1.0; y1 = 0.5; y2 = 0.6;
+			break;
+		case '8':
+			x1 = 0.0; x2 = 0.1; y1 = 0.6; y2 = 0.7;
+			break;
+		case '9':
+			x1 = 0.1; x2 = 0.2; y1 = 0.6; y2 = 0.7;
+			break;
+		case '!':
+			x1 = 0.2; x2 = 0.3; y1 = 0.6; y2 = 0.7;
+			break;
+		case '"':
+			x1 = 0.3; x2 = 0.4; y1 = 0.6; y2 = 0.7;
+			break;
+		case '#':
+			x1 = 0.4; x2 = 0.5; y1 = 0.6; y2 = 0.7;
+			break;
+		case '$':
+			x1 = 0.5; x2 = 0.6; y1 = 0.6; y2 = 0.7;
+			break;
+		case '&':
+			x1 = 0.6; x2 = 0.7; y1 = 0.6; y2 = 0.7;
+			break;
+		case '\'':
+			x1 = 0.7; x2 = 0.8; y1 = 0.6; y2 = 0.7;
+			break;
+		case '(':
+			x1 = 0.8; x2 = 0.9; y1 = 0.6; y2 = 0.7;
+			break;
+		case ')':
+			x1 = 0.9; x2 = 1.0; y1 = 0.6; y2 = 0.7;
+			break;
+		case '*':
+			x1 = 0.0; x2 = 0.1; y1 = 0.7; y2 = 0.8;
+			break;
+		case '+':
+			x1 = 0.1; x2 = 0.2; y1 = 0.7; y2 = 0.8;
+			break;
+		case ',':
+			x1 = 0.2; x2 = 0.3; y1 = 0.7; y2 = 0.8;
+			break;
+		case '-':
+			x1 = 0.3; x2 = 0.4; y1 = 0.7; y2 = 0.8;
+			break;
+		case '.':
+			x1 = 0.4; x2 = 0.5; y1 = 0.7; y2 = 0.8;
+			break;
+		case '/':
+			x1 = 0.5; x2 = 0.6; y1 = 0.7; y2 = 0.8;
+			break;
+		case ':':
+			x1 = 0.6; x2 = 0.7; y1 = 0.7; y2 = 0.8;
+			break;
+		case ';':
+			x1 = 0.7; x2 = 0.8; y1 = 0.7; y2 = 0.8;
+			break;
+		case '<':
+			x1 = 0.8; x2 = 0.9; y1 = 0.7; y2 = 0.8;
+			break;
+		case '=':
+			x1 = 0.9; x2 = 1.0; y1 = 0.7; y2 = 0.8;
+			break;
+		case '>':
+			x1 = 0.0; x2 = 0.1; y1 = 0.8; y2 = 0.9;
+			break;
+		case '?':
+			x1 = 0.1; x2 = 0.2; y1 = 0.8; y2 = 0.9;
+			break;
+		case '@':
+			x1 = 0.2; x2 = 0.3; y1 = 0.8; y2 = 0.9;
+			break;
+		case '[':
+			x1 = 0.3; x2 = 0.4; y1 = 0.8; y2 = 0.9;
+			break;
+		case '\\':
+			x1 = 0.4; x2 = 0.5; y1 = 0.8; y2 = 0.9;
+			break;
+		case ']':
+			x1 = 0.5; x2 = 0.6; y1 = 0.8; y2 = 0.9;
+			break;
+		case '^':
+			x1 = 0.6; x2 = 0.7; y1 = 0.8; y2 = 0.9;
+			break;
+		case '_':
+			x1 = 0.7; x2 = 0.8; y1 = 0.8; y2 = 0.9;
+			break;
+		case '`':
+			x1 = 0.8; x2 = 0.9; y1 = 0.8; y2 = 0.9;
+			break;
+		case '{':
+			x1 = 0.9; x2 = 1.0; y1 = 0.8; y2 = 0.9;
+			break;
+		case '|':
+			x1 = 0.0; x2 = 0.1; y1 = 0.9; y2 = 1.0;
+			break;
+		case '}':
+			x1 = 0.1; x2 = 0.2; y1 = 0.9; y2 = 1.0;
+			break;
+		case '~':
+			x1 = 0.2; x2 = 0.3; y1 = 0.9; y2 = 1.0;
+			break;
+		case ' ':
+			x1 = 0.8; x2 = 0.9; y1 = 0.9; y2 = 1.0;
+			break;
+		default:
+			x1 = 0.9; x2 = 1.0; y1 = 0.9; y2 = 1.0;
+			break;
+		}
+
+		glm::vec3 model = glm::vec3(0.0f, 0.0f, 0.0f);
+		model.x = loc.x + (0.2*s*i);//0.2 is the length of one text character
+		model.y = loc.y;
+		//model = glm::translate(model, glm::vec3(loc.x, loc.y, 0.0));
+		//model = glm::translate(model, glm::vec3(i*0.1, 0.0, 0.0));
+		//model rotate if needed
+		//model scale if needed
+
+		shader.setVec3("model", model);
+
+		GLuint vao = createTextVao(x1, y1, x2, y2, s);
+		glBindVertexArray(vao);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0);
+
+	}
+
+}
+
 int main(int argc, char* argv[])
 {
 	// Initialize GLFW and OpenGL version
@@ -1551,7 +1961,7 @@ int main(int argc, char* argv[])
 		glfwTerminate();
 		return -1;
 	}
-
+	
 #if defined(PLATFORM_OSX)
 	brickTextureID = loadTexture("Textures/brick.jpg");
 	metalTextureID = loadTexture("Textures/metal.jpg");
@@ -1562,6 +1972,7 @@ int main(int argc, char* argv[])
 	skyboxLeft = loadTexture("Textures/SkyboxLeft.png");
 	skyboxRight = loadTexture("Textures/SkyboxRight.png");
 	skyboxTop = loadTexture("Textures/SkyboxTop.png");
+	font = loadTexture("Textures/font.png");
 #else
 	brickTextureID = loadTexture("../Assets/Textures/brick.jpg");
 	metalTextureID = loadTexture("../Assets/Textures/metal.jpg");
@@ -1572,6 +1983,7 @@ int main(int argc, char* argv[])
 	skyboxLeft = loadTexture("../Assets/Textures/SkyboxLeft.png");
 	skyboxRight = loadTexture("../Assets/Textures/SkyboxRight.png");
 	skyboxTop = loadTexture("../Assets/Textures/SkyboxTop.png");
+	font = loadTexture("../Assets/Textures/font.png");
 #endif
 
 	// Black background
@@ -1587,6 +1999,7 @@ int main(int argc, char* argv[])
 	// Compiles and links shaders
 	Shader mainShader("shape.vertexshader", "shape.fragmentshader");
 	Shader shadowShader("depth.vertexshader", "depth.fragmentshader");
+	Shader textShader("text.vertexshader", "text.fragmentshader");
 
 	// Shader parameters
 	mainShader.use();
@@ -1595,7 +2008,7 @@ int main(int argc, char* argv[])
 
 	// Creates array and buffer objects
 	GLuint cubeVao = createCubeVao();
-	GLuint depthMapFBO = buildDepthMapFrameBuffer();
+    GLuint depthMapFBO = buildDepthMapFrameBuffer();
 
 	// Shape and wall randomization
 	do
@@ -1607,15 +2020,52 @@ int main(int argc, char* argv[])
 		shapePositions = randomizeShape();
 	} while (shapePositions.size() == 0);
 	randomizeRotations();
-	// glowFBO = buildGlowFrameBuffer();
+	
 
 	ISoundEngine* SoundEngine = createIrrKlangDevice();
 
-	SoundEngine->play2D("../audio/signals.mp3", true);
+	SoundEngine->play2D("../audio/audio_signals.mp3", true);
 
+
+
+	double startTime = clock();
 	// Entering Main Loop
 	while (!glfwWindowShouldClose(window))
 	{
+		if (gameScreen && startGame) {
+			startTime = clock();
+			startGame = false;
+			playGame = true;
+			rotateShapeY = 0.0f;
+			rotateShapeX = 0.0f;
+			rotateShapeZ = 0.0f;
+			shapeMovement = 0.0f;
+			level = 0.0;
+			
+		}
+		
+		currentTime = clock();
+		deltaTime2 = (currentTime - startTime)/CLOCKS_PER_SEC;
+		timeLeft = totalTime - deltaTime2;
+		if (timeLeft < 0.0) {
+			gameScreen = false;
+			endScreen = true;
+			shapeMovement = 0.0f;
+			
+		}
+		int minutes = (int)timeLeft / 60;
+		int seconds = (int)timeLeft % 60;
+		
+		char timeLeftChar[5];
+		std::string s = std::to_string(minutes);
+		char const *minutesChar = s.c_str();
+		timeLeftChar[0] = minutesChar[0];
+		timeLeftChar[1] = ':';
+		s = std::to_string(100+seconds);
+		char const *secondsChar = s.c_str();
+		timeLeftChar[2] = secondsChar[1];
+		timeLeftChar[3] = secondsChar[2];
+		timeLeftChar[4] = '\0';
 		// Each frame, reset color of each pixel to glClearColor
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1628,7 +2078,7 @@ int main(int argc, char* argv[])
 		mouseYChange *= sensitivity;
 
 		// Processing input
-		
+
 		processInput(window);
 		rotateShapes(9);
 
@@ -1639,24 +2089,29 @@ int main(int argc, char* argv[])
 		mainShader.setBool("useTextures", false);
 		calculateShadows(shadowShader, mainShader, depthMapFBO, cubeVao, window);
 
-		if (!levelBeaten) {
+		if (gameScreen && !levelBeaten) {
 			glm::mat4 modelCheck = glm::mat4(1.0f);
 			modelCheck = glm::rotate(modelCheck, glm::radians(rotateShapeY + rotateRandomY), glm::vec3(0.0f, 1.0f, 0.0f));
 			modelCheck = glm::rotate(modelCheck, glm::radians(rotateShapeZ + rotateRandomZ), glm::vec3(0.0f, 0.0f, 1.0f));
 			modelCheck = glm::rotate(modelCheck, glm::radians(rotateShapeX + rotateRandomX), glm::vec3(1.0f, 0.0f, 0.0f));
 			glm::mat4 modelCheck2 = glm::mat4(1.0f);
 			levelBeaten = true;
-				for (int i = 0; i < 4; i++) {
-					for (int j = 0; j < 4; j++) {
-						if (round(modelCheck[i][j]) != round(modelCheck2[i][j])) levelBeaten = false;
-					}
+			for (int i = 0; i < 4; i++) {
+				for (int j = 0; j < 4; j++) {
+					if (round(modelCheck[i][j]) != round(modelCheck2[i][j])) levelBeaten = false;
 				}
+				
+			}
 
-			
+			if (levelBeaten) {
+				SoundEngine->play2D("../audio/audio_correct.wav", false);
+				level += 1;
+			}
 
 		}
+		
 		// Shape movement and randomization
-		if (shapeMovement > 45.0f)
+		if (gameScreen && shapeMovement > 45.0f)
 		{
 			rotatingXn = false;
 			rotatingYn = false;
@@ -1664,17 +2119,17 @@ int main(int argc, char* argv[])
 			rotatingXp = false;
 			rotatingYp = false;
 			rotatingYp = false;
-		
+			qPressed = false;
+			wPressed = false;
+			ePressed = false;
+			aPressed = false;
+			sPressed = false;
+			dPressed = false;
 			shapeMovement = 0.0f;
-			if (levelBeaten) {
-				level += 1;
-
-				SoundEngine->play2D("../audio/correct.wav", false);
+			if (!levelBeaten) {
+				SoundEngine->play2D("../audio/audio_wrong.wav", false);
 			}
-			else {
-				SoundEngine->play2D("../audio/wrong.wav", false);
-			}
-				
+			
 			levelBeaten = false;
 			setLevelParameters();
 			randomizeRotations();
@@ -1689,9 +2144,10 @@ int main(int argc, char* argv[])
 			while (shapePositions.size() == 0);
 		}
 		else
-			if (levelBeaten) {
-				shapeMovement += 3 * shapeSpeed; //speed up on level beaten.
-			}else shapeMovement +=  shapeSpeed;
+			if (gameScreen && levelBeaten) {
+				shapeMovement += 10 * shapeSpeed; //speed up on level beaten.
+			}
+			else if(gameScreen) shapeMovement += shapeSpeed;
 
 		// Display parameters
 		mainShader.use();
@@ -1699,19 +2155,20 @@ int main(int argc, char* argv[])
 		mainShader.setVec3("viewPos", cameraPos);
 		mainShader.setBool("useTextures", useTextures);
 		mainShader.setBool("useShadows", useShadows);
+		if (gameScreen) {
+			// Wall display
+			glBindVertexArray(cubeVao);
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, brickTextureID);
+			glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
+			displayWall(mainShader);
 
-		// Wall display
-		glBindVertexArray(cubeVao);
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, brickTextureID);
-		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
-		displayWall(mainShader);
-
-		// Shape display
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, metalTextureID);
-		glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
-		displayShape(mainShader);
+			// Shape display
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, metalTextureID);
+			glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
+			displayShape(mainShader);
+		}
 		mainShader.setBool("useTextures", true);
 
 		//Skybox display
@@ -1720,7 +2177,28 @@ int main(int argc, char* argv[])
 		drawSkybox(mainShader);
 
 		mainShader.setBool("useTextures", useTextures);
-
+		int score = 100000 + level * 25;
+		std::string scoreString = std::to_string(score);
+		char const *scoreChar = scoreString.c_str();
+	
+		//displaying text
+		textShader.use();
+		if (gameScreen) {
+			displayText(textShader, "Score:", glm::vec2(-0.9f, 0.9f), 0.4);
+			displayText(textShader, scoreChar + 1, glm::vec2(-0.8f, 0.8f), 0.4);
+			displayText(textShader, "Time left:", glm::vec2(0.3f, 0.9f), 0.4);
+			displayText(textShader, timeLeftChar, glm::vec2(0.5f, 0.8f), 0.4);
+		}
+		if (startScreen) {
+			displayText(textShader, "Press ENTER to start", glm::vec2(-0.8f, 0.0f), 0.4);
+			
+		}
+		if (endScreen) {
+			displayText(textShader, "Final Score:", glm::vec2(-0.9f, 0.9f), 0.4);
+			displayText(textShader, scoreChar + 1, glm::vec2(-0.8f, 0.8f), 0.4);
+			displayText(textShader, "To Play Again", glm::vec2(-0.4f, 0.05f), 0.4);
+			displayText(textShader, "Press ENTER", glm::vec2(-0.3f, -0.05f), 0.4);
+		}
 		// End frame
 		glfwSwapBuffers(window);
 
