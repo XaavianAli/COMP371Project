@@ -15,6 +15,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h" //image loading library from https://github.com/nothings/stb
 
+// Sound Engine
+#include "irrKlang/irrKlang.h"
+using namespace irrklang;
+
 int counter = 0;
 
 float deltaTime = 0.0f;
@@ -1604,6 +1608,10 @@ int main(int argc, char* argv[])
 	randomizeRotations();
 	// glowFBO = buildGlowFrameBuffer();
 
+	ISoundEngine* SoundEngine = createIrrKlangDevice();
+
+	SoundEngine->play2D("../audio/signals.mp3", true);
+
 	// Entering Main Loop
 	while (!glfwWindowShouldClose(window))
 	{
@@ -1657,7 +1665,15 @@ int main(int argc, char* argv[])
 			rotatingYp = false;
 		
 			shapeMovement = 0.0f;
-			if(levelBeaten) level += 1;
+			if (levelBeaten) {
+				level += 1;
+
+				SoundEngine->play2D("../audio/correct.wav", false);
+			}
+			else {
+				SoundEngine->play2D("../audio/wrong.wav", false);
+			}
+				
 			levelBeaten = false;
 			setLevelParameters();
 			randomizeRotations();
