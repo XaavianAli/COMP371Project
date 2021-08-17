@@ -1,0 +1,14 @@
+#version 330 core
+
+in vec4 vertexColor;
+in vec2 texCoord;
+
+out vec4 FragColor;
+
+uniform sampler2D font;
+
+void main()
+{
+   FragColor = texture(font, texCoord);
+   //FragColor = texture(font, texCoord) * vec4(vertexColor.r, vertexColor.g, vertexColor.b, vertexColor.a);
+}
