@@ -11,16 +11,13 @@
 #include <filesystem>
 #include <vector>
 
+#include "cimport.h"
 #include "shader.h"
+#include "../Source/OBJloader.h"  //For loading .obj files
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h" //image loading library from https://github.com/nothings/stb
-
-
-// Sound Engine
-#include "irrKlang/irrKlang.h"
+#include "stb_image.h" // Image loading library from https://github.com/nothings/stb
+#include "irrKlang/irrKlang.h" // Sound Engine
 using namespace irrklang;
-
-int counter = 0;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -56,9 +53,6 @@ bool endScreen = false;
 double currentTime;
 double deltaTime2;
 double timeLeft;
-
-
-
 
 // Stores rendering modes, default is triangles
 GLenum renderModeShape = GL_TRIANGLES;
@@ -284,6 +278,7 @@ GLuint createCubeVao() // Taken from lab and modified
 
 	return vertexArrayObject;
 }
+
 void buildMatrices(Shader shader)
 {
 	glm::mat4 model = glm::mat4(1.0f);
@@ -702,12 +697,12 @@ bool boundsAreSymmetric(std::vector<glm::vec3> wallBounds)
 		},
 		{
 			glm::vec3(0.0f, 0.0f, 0.0f),
-			glm::vec3(1.0f, 0.0f, 0.0f),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f, 1.0f, 0.0f),
+			glm::vec3(2.0f, 1.0f, 0.0f),
 			glm::vec3(2.0f, 0.0f, 0.0f),
-			glm::vec3(2.0f, -1.0f, 0.0f),
-			glm::vec3(2.0f, -2.0f, 0.0f),
-			glm::vec3(0.0f, -1.0f, 0.0f),
-			glm::vec3(1.0f, -2.0f, 0.0f)
+			glm::vec3(1.0f, -1.0f, 0.0f),
+			glm::vec3(2.0f, -1.0f, 0.0f)
 		},
 		{
 			glm::vec3(0.0f, 0.0f, 0.0f),
@@ -927,8 +922,6 @@ std::vector<glm::vec3> randomizeShape()
 
 std::vector<glm::vec3> randomizeWall(int numberOfCubes)
 {
-	counter += 1;
-
 	std::vector<glm::vec3> outerPositions =
 	{
 		glm::vec3(-1.0f, -1.0f, 0.0f),
@@ -1021,8 +1014,6 @@ std::vector<glm::vec3> randomizeWall(int numberOfCubes)
 
 void displayShape(Shader shader)
 {
-
-
 	float minX = 100.0f;
 	float maxX = -100.0f;
 	float minY = 100.0f;
@@ -1030,7 +1021,8 @@ void displayShape(Shader shader)
 	float minZ = 100.0f;
 	float maxZ = -100.0f;
 
-	for (glm::vec3 shape : shapePositions) {
+	for (glm::vec3 shape : shapePositions) 
+	{
 		if (shape.x < minX) minX = shape.x;
 		if (shape.x > maxX) maxX = shape.x;
 		if (shape.y < minY) minY = shape.y;
@@ -1047,28 +1039,40 @@ void displayShape(Shader shader)
 	{
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3((0.0f + translateShapeX) * 0.07f, (0.0f + translateShapeY) * 0.07f, (1.0f + translateShapeZ - shapeMovement - minZ) * 0.07f));
-
 		model = glm::scale(model, glm::vec3(0.07f * scaleShape, 0.07f * scaleShape, 0.07f * scaleShape));
 		model = glm::translate(model, shapePositions[i]);
-
-
 		model = glm::translate(model, glm::vec3((-shapePositions[i].x) + centerX, -shapePositions[i].y + centerY, -shapePositions[i].z + centerZ));
 		model = glm::rotate(model, glm::radians(rotateShapeY + rotateRandomY), glm::vec3(0.0f, 1.0f, 0.0f));
 		model = glm::rotate(model, glm::radians(rotateShapeZ + rotateRandomZ), glm::vec3(0.0f, 0.0f, 1.0f));
 		model = glm::rotate(model, glm::radians(rotateShapeX + rotateRandomX), glm::vec3(1.0f, 0.0f, 0.0f));
-
-
-
-
-
 		model = glm::translate(model, glm::vec3((shapePositions[i].x - centerX), shapePositions[i].y - centerY, shapePositions[i].z - centerZ));
-
-
-
 
 		shader.setMat4("model", model);
 
 		glDrawArrays(renderModeShape, 0, 36);
+	}
+}
+
+void displayModel(Shader shader, int verticesCount)
+{
+	glm::vec3 positions[] =
+	{
+		glm::vec3(15.0f, 8.0f, -45.5f),
+		glm::vec3(-10.0f, 4.0f, -32.5f),
+		glm::vec3(2.0f, -8.0f, -30.5f),
+		glm::vec3(0.0f, 10.0f, -40.5f),
+		glm::vec3(-3.0f, 9.0f, -12.5f),
+		glm::vec3(-12.0f, -5.0f, -22.0f),
+		glm::vec3(11.0f, -5.0f, -23.5f)
+	};
+
+	for (int i = 0; i < 8; i++)
+	{
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::scale(model, glm::vec3(0.07f, 0.07f, 0.07f));
+		model = glm::translate(model, positions[i]);
+		shader.setMat4("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, verticesCount);
 	}
 }
 
@@ -1117,7 +1121,6 @@ void drawSkybox(Shader shader)
 	glUniform1i(glGetUniformLocation(shader.ID, "ourTexture"), 2);
 	glDrawArrays(GL_TRIANGLES, 66, 6);
 }
-
 
 void displayWall(Shader shader)
 {
@@ -1275,12 +1278,14 @@ void processInput(GLFWwindow* window)
 
 	if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS)
 	{
-		if (startScreen = true) {
+		if (startScreen == true) 
+		{
 			startScreen = false;
 			gameScreen = true;
 			startGame = true;
 		}
-		if (endScreen = true) {
+		if (endScreen == true) 
+		{
 			endScreen = false;
 			startGame = true;
 			gameScreen = true;
@@ -1296,9 +1301,8 @@ void processInput(GLFWwindow* window)
 		translateShapeZ = 0.0;
 	}
 
-	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) 
 		aPressed = true;
-	}
 
 	if (aPressed && glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE)
 	{
@@ -1468,14 +1472,13 @@ void setLevelParameters()
 	shapeSpeed = 0.04f + ((level / 3) + 1) * 0.02f;
 }
 
-void randomizeRotations() {
-
-
-
+void randomizeRotations() 
+{
 	int randZ = rand() % 3;
 	int randX = rand() % 3;
 	int randY = rand() & 3;
-	switch (randZ) {
+	switch (randZ) 
+	{
 	case 0: rotateRandomZ = 90.0f;
 		break;
 	case 1: rotateRandomZ = 180.0f;
@@ -1484,7 +1487,8 @@ void randomizeRotations() {
 		break;
 	}
 
-	switch (randX) {
+	switch (randX) 
+	{
 	case 0: rotateRandomX = 90.0f;
 		break;
 	case 1: rotateRandomX = 180.0f;
@@ -1493,7 +1497,8 @@ void randomizeRotations() {
 		break;
 	}
 
-	switch (randY) {
+	switch (randY) 
+	{
 	case 0: rotateRandomY = 90.0f;
 		break;
 	case 1: rotateRandomY = 180.0f;
@@ -1541,6 +1546,49 @@ GLuint loadTexture(const char* filename) // From lab
 	return textureId;
 }
 
+GLuint setupModelVBO(std::string path, int& vertexCount) 
+{
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec3> normals;
+	std::vector<glm::vec2> UVs;
+
+	//read the vertex data from the model's OBJ file
+	loadOBJ(path.c_str(), vertices, normals, UVs);
+
+	GLuint VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO); //Becomes active VAO
+	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+
+	//Vertex VBO setup
+	GLuint vertices_VBO;
+	glGenBuffers(1, &vertices_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, vertices_VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+
+	//Normals VBO setup
+	GLuint normals_VBO;
+	glGenBuffers(1, &normals_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, normals_VBO);
+	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(1);
+
+	//UVs VBO setup
+	GLuint uvs_VBO;
+	glGenBuffers(1, &uvs_VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, uvs_VBO);
+	glBufferData(GL_ARRAY_BUFFER, UVs.size() * sizeof(glm::vec2), &UVs.front(), GL_STATIC_DRAW);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(2);
+
+	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs, as we are using multiple VAOs)
+	vertexCount = vertices.size();
+	return VAO;
+}
+
 GLuint createTextVao(float x1, float y1, float x2, float y2, float s)
 {
 	// A vertex is a point on a polygon, it contains positions and other data (eg: colors)
@@ -1557,7 +1605,6 @@ GLuint createTextVao(float x1, float y1, float x2, float y2, float s)
 	GLuint vertexArrayObject;
 	glGenVertexArrays(1, &vertexArrayObject);
 	glBindVertexArray(vertexArrayObject);
-
 
 	// Upload Vertex Buffer to the GPU, keep a reference to it (vertexBufferObject)
 	GLuint vertexBufferObject;
@@ -1599,7 +1646,8 @@ GLuint createTextVao(float x1, float y1, float x2, float y2, float s)
 	return vertexArrayObject;
 }
 
-void displayText(Shader shader, std::string text, glm::vec2 loc, float s) {
+void displayText(Shader shader, std::string text, glm::vec2 loc, float s)
+{
 
 	//Function to display text. the vec2 parameter is the location on the screen to start displaying the string
 
@@ -2009,6 +2057,8 @@ int main(int argc, char* argv[])
 	// Creates array and buffer objects
 	GLuint cubeVao = createCubeVao();
     GLuint depthMapFBO = buildDepthMapFrameBuffer();
+	int verticesCount;
+	GLuint modelVAO = setupModelVBO("../Assets/Models/aircraft.obj", verticesCount);
 
 	// Shape and wall randomization
 	do
@@ -2020,13 +2070,10 @@ int main(int argc, char* argv[])
 		shapePositions = randomizeShape();
 	} while (shapePositions.size() == 0);
 	randomizeRotations();
-	
 
+	// Sound
 	ISoundEngine* SoundEngine = createIrrKlangDevice();
-
 	SoundEngine->play2D("../audio/audio_signals.wav", true);
-
-
 
 	double startTime = clock();
 	// Entering Main Loop
@@ -2041,7 +2088,6 @@ int main(int argc, char* argv[])
 			rotateShapeZ = 0.0f;
 			shapeMovement = 0.0f;
 			level = 0.0;
-			
 		}
 		
 		currentTime = clock();
@@ -2100,7 +2146,6 @@ int main(int argc, char* argv[])
 				for (int j = 0; j < 4; j++) {
 					if (round(modelCheck[i][j]) != round(modelCheck2[i][j])) levelBeaten = false;
 				}
-				
 			}
 
 			if (levelBeaten) {
@@ -2155,7 +2200,8 @@ int main(int argc, char* argv[])
 		mainShader.setVec3("viewPos", cameraPos);
 		mainShader.setBool("useTextures", useTextures);
 		mainShader.setBool("useShadows", useShadows);
-		if (gameScreen) {
+		if (gameScreen) 
+		{
 			// Wall display
 			glBindVertexArray(cubeVao);
 			glActiveTexture(GL_TEXTURE2);
@@ -2168,10 +2214,15 @@ int main(int argc, char* argv[])
 			glBindTexture(GL_TEXTURE_2D, metalTextureID);
 			glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
 			displayShape(mainShader);
+
+			// Model display
+			glBindVertexArray(modelVAO);
+			displayModel(mainShader, verticesCount);
 		}
 		mainShader.setBool("useTextures", true);
 
 		//Skybox display
+		glBindVertexArray(cubeVao);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		drawSkybox(mainShader);
