@@ -11,7 +11,7 @@
 #include <filesystem>
 #include <vector>
 
-#include "cimport.h"
+
 #include "shader.h"
 #include "../Source/OBJloader.h"  //For loading .obj files
 #define STB_IMAGE_IMPLEMENTATION
@@ -54,6 +54,13 @@ double currentTime;
 double deltaTime2;
 double timeLeft;
 
+
+int rotations[1000];
+float rotationHelp[1000];
+int numberOfRotations = 0;
+int minChecked = 0;
+
+
 // Stores rendering modes, default is triangles
 GLenum renderModeShape = GL_TRIANGLES;
 
@@ -95,9 +102,6 @@ float translateShapeX = 0.0f;
 float translateShapeY = 0.0f;
 float translateShapeZ = 0.0f;
 float scaleShape = 1.0f;
-float rotateShapeX = 0.0f;
-float rotateShapeY = 0.0f;
-float rotateShapeZ = 0.0f;
 float rotateRandomX = 0.0f;
 float rotateRandomY = 0.0f;
 float rotateRandomZ = 0.0f;
@@ -105,19 +109,6 @@ std::vector<glm::vec3> shapePositions;
 std::vector<glm::vec3> wallPositions;
 std::vector<glm::vec3> wallBounds;
 
-//Variables for smooth rotation
-bool rotatingXp = false;
-int rotateCounterXp = 0;
-bool rotatingXn = false;
-int rotateCounterXn = 0;
-bool rotatingYp = false;
-int rotateCounterYp = 0;
-bool rotatingYn = false;
-int rotateCounterYn = 0;
-bool rotatingZp = false;
-int rotateCounterZp = 0;
-bool rotatingZn = false;
-int rotateCounterZn = 0;
 
 // Levels parameters
 int numberOfCubesInWall = 5;
@@ -1042,9 +1033,30 @@ void displayShape(Shader shader)
 		model = glm::scale(model, glm::vec3(0.07f * scaleShape, 0.07f * scaleShape, 0.07f * scaleShape));
 		model = glm::translate(model, shapePositions[i]);
 		model = glm::translate(model, glm::vec3((-shapePositions[i].x) + centerX, -shapePositions[i].y + centerY, -shapePositions[i].z + centerZ));
-		model = glm::rotate(model, glm::radians(rotateShapeY + rotateRandomY), glm::vec3(0.0f, 1.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(rotateShapeZ + rotateRandomZ), glm::vec3(0.0f, 0.0f, 1.0f));
-		model = glm::rotate(model, glm::radians(rotateShapeX + rotateRandomX), glm::vec3(1.0f, 0.0f, 0.0f));
+
+		for (int i = numberOfRotations - 1; i >= 0; i--) {
+			switch (rotations[i]) {
+			case 0: model = glm::rotate(model, glm::radians(rotationHelp[i]), glm::vec3(1.0f, 0.0f, 0.0f));
+				break;
+			case 1:model = glm::rotate(model, glm::radians(-rotationHelp[i]), glm::vec3(1.0f, 0.0f, 0.0f));
+				break;
+			case 2:model = glm::rotate(model, glm::radians(rotationHelp[i]), glm::vec3(0.0f, 1.0f, 0.0f));
+				break;
+			case 3:model = glm::rotate(model, glm::radians(-rotationHelp[i]), glm::vec3(0.0f, 1.0f, 0.0f));
+				break;
+			case 4:model = glm::rotate(model, glm::radians(rotationHelp[i]), glm::vec3(0.0f, 0.0f, 1.0f));
+				break;
+			case 5:model = glm::rotate(model, glm::radians(-rotationHelp[i]), glm::vec3(0.0f, 0.0f, 1.0f));
+				break;
+
+
+
+
+			}
+		}
+		model = glm::rotate(model, glm::radians(rotateRandomY), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(rotateRandomZ), glm::vec3(0.0f, 0.0f, 1.0f));
+		model = glm::rotate(model, glm::radians(rotateRandomX), glm::vec3(1.0f, 0.0f, 0.0f));
 		model = glm::translate(model, glm::vec3((shapePositions[i].x - centerX), shapePositions[i].y - centerY, shapePositions[i].z - centerZ));
 
 		shader.setMat4("model", model);
@@ -1194,58 +1206,9 @@ void calculateShadows(Shader shadowShader, Shader mainShader, GLuint depthMapFBO
 
 void rotateShapes(float x) {
 
-	if (rotateCounterXp < 89 && rotatingXp) {
-		rotateShapeX += x;
-		rotateCounterXp += x;
-	}
-	else {
-		rotatingXp = false;
-		rotateCounterXp = 0;
-	}
-
-	if (rotateCounterXn < 89 && rotatingXn) {
-		rotateShapeX -= x;
-		rotateCounterXn += x;
-	}
-	else {
-		rotatingXn = false;
-		rotateCounterXn = 0;
-	}
-
-	if (rotateCounterYp < 89 && rotatingYp) {
-		rotateShapeY += x;
-		rotateCounterYp += x;
-	}
-	else {
-		rotatingYp = false;
-		rotateCounterYp = 0;
-	}
-
-	if (rotateCounterYn < 89 && rotatingYn) {
-		rotateShapeY -= x;
-		rotateCounterYn += x;
-	}
-	else {
-		rotatingYn = false;
-		rotateCounterYn = 0;
-	}
-
-	if (rotateCounterZp < 89 && rotatingZp) {
-		rotateShapeZ += x;
-		rotateCounterZp += x;
-	}
-	else {
-		rotatingZp = false;
-		rotateCounterZp = 0;
-	}
-
-	if (rotateCounterZn < 89 && rotatingZn) {
-		rotateShapeZ -= x;
-		rotateCounterZn += x;
-	}
-	else {
-		rotatingZn = false;
-		rotateCounterZn = 0;
+	for (int i = minChecked; i < numberOfRotations; i++) {
+		if (rotationHelp[i] < 89) rotationHelp[i] += x;
+		else minChecked++;
 	}
 
 }
@@ -1301,13 +1264,16 @@ void processInput(GLFWwindow* window)
 		translateShapeZ = 0.0;
 	}
 
-	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) 
+	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		aPressed = true;
+	}
+
 
 	if (aPressed && glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE)
 	{
 		aPressed = false;
-		rotatingYp = true;
+		rotations[numberOfRotations] = 0;
+		numberOfRotations++;
 	}
 
 	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
@@ -1316,7 +1282,8 @@ void processInput(GLFWwindow* window)
 	if (dPressed && glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE)
 	{
 		dPressed = false;
-		rotatingYn = true;
+		rotations[numberOfRotations] = 1;
+		numberOfRotations++;
 	}
 
 	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -1325,7 +1292,8 @@ void processInput(GLFWwindow* window)
 	if (wPressed && glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE)
 	{
 		wPressed = false;
-		rotatingXn = true;
+		rotations[numberOfRotations] = 2;
+		numberOfRotations++;
 	}
 
 	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -1334,7 +1302,8 @@ void processInput(GLFWwindow* window)
 	if (sPressed && glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE)
 	{
 		sPressed = false;
-		rotatingXp = true;
+		rotations[numberOfRotations] = 3;
+		numberOfRotations++;
 	}
 
 	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
@@ -1343,7 +1312,8 @@ void processInput(GLFWwindow* window)
 	if (qPressed && glfwGetKey(window, GLFW_KEY_Q) == GLFW_RELEASE)
 	{
 		qPressed = false;
-		rotatingZp = true;
+		rotations[numberOfRotations] = 4;
+		numberOfRotations++;
 	}
 
 	if (!levelBeaten && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
@@ -1352,15 +1322,14 @@ void processInput(GLFWwindow* window)
 	if (ePressed && glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE)
 	{
 		ePressed = false;
-		rotatingZn = true;
+		rotations[numberOfRotations] = 5;
+		numberOfRotations++;
 	}
+
 
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) // Reset Shapes
 	{
 		renderModeShape = GL_TRIANGLES;
-		rotateShapeX = 0.0;
-		rotateShapeY = 0.0;
-		rotateShapeZ = 0.0;
 		scaleShape = 1.0;
 		translateShapeX = 0.0;
 		translateShapeY = 0.0;
@@ -2083,11 +2052,20 @@ int main(int argc, char* argv[])
 			startTime = clock();
 			startGame = false;
 			playGame = true;
-			rotateShapeY = 0.0f;
-			rotateShapeX = 0.0f;
-			rotateShapeZ = 0.0f;
 			shapeMovement = 0.0f;
 			level = 0.0;
+			for (int i = 0; i < numberOfRotations; i++) {
+				rotationHelp[i] = 0.0f;
+			}
+			processInput(window);
+			numberOfRotations = 0;
+			minChecked = 0;
+			qPressed = false;
+			wPressed = false;
+			ePressed = false;
+			aPressed = false;
+			sPressed = false;
+			dPressed = false;
 		}
 		
 		currentTime = clock();
@@ -2124,8 +2102,7 @@ int main(int argc, char* argv[])
 		mouseYChange *= sensitivity;
 
 		// Processing input
-
-		processInput(window);
+		if(!levelBeaten) processInput(window);
 		rotateShapes(9);
 
 		// Mouse movement
@@ -2137,9 +2114,29 @@ int main(int argc, char* argv[])
 
 		if (gameScreen && !levelBeaten) {
 			glm::mat4 modelCheck = glm::mat4(1.0f);
-			modelCheck = glm::rotate(modelCheck, glm::radians(rotateShapeY + rotateRandomY), glm::vec3(0.0f, 1.0f, 0.0f));
-			modelCheck = glm::rotate(modelCheck, glm::radians(rotateShapeZ + rotateRandomZ), glm::vec3(0.0f, 0.0f, 1.0f));
-			modelCheck = glm::rotate(modelCheck, glm::radians(rotateShapeX + rotateRandomX), glm::vec3(1.0f, 0.0f, 0.0f));
+			for (int i = numberOfRotations - 1; i >= 0; i--) {
+				switch (rotations[i]) {
+				case 0: modelCheck = glm::rotate(modelCheck, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+					break;
+				case 1:modelCheck = glm::rotate(modelCheck, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+					break;
+				case 2:modelCheck = glm::rotate(modelCheck, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+					break;
+				case 3:modelCheck = glm::rotate(modelCheck, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+					break;
+				case 4:modelCheck = glm::rotate(modelCheck, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+					break;
+				case 5:modelCheck = glm::rotate(modelCheck, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+					break;
+
+
+
+
+				}
+			}
+			modelCheck = glm::rotate(modelCheck, glm::radians(rotateRandomY), glm::vec3(0.0f, 1.0f, 0.0f));
+			modelCheck = glm::rotate(modelCheck, glm::radians(rotateRandomZ), glm::vec3(0.0f, 0.0f, 1.0f));
+			modelCheck = glm::rotate(modelCheck, glm::radians(rotateRandomX), glm::vec3(1.0f, 0.0f, 0.0f));
 			glm::mat4 modelCheck2 = glm::mat4(1.0f);
 			levelBeaten = true;
 			for (int i = 0; i < 4; i++) {
@@ -2158,18 +2155,20 @@ int main(int argc, char* argv[])
 		// Shape movement and randomization
 		if (gameScreen && shapeMovement > 45.0f)
 		{
-			rotatingXn = false;
-			rotatingYn = false;
-			rotatingZn = false;
-			rotatingXp = false;
-			rotatingYp = false;
-			rotatingYp = false;
+			
 			qPressed = false;
 			wPressed = false;
 			ePressed = false;
 			aPressed = false;
 			sPressed = false;
 			dPressed = false;
+			processInput(window);
+			for (int i = 0; i < numberOfRotations; i++) {
+				rotationHelp[i] = 0.0f;
+			}
+			numberOfRotations = 0;
+			
+			minChecked = 0;
 			shapeMovement = 0.0f;
 			if (!levelBeaten) {
 				SoundEngine->play2D("../audio/audio_wrong.wav", false);
@@ -2178,9 +2177,7 @@ int main(int argc, char* argv[])
 			levelBeaten = false;
 			setLevelParameters();
 			randomizeRotations();
-			rotateShapeX = 0.0f;
-			rotateShapeY = 0.0f;
-			rotateShapeZ = 0.0f;
+			
 			do
 				wallPositions = randomizeWall(numberOfCubesInWall);
 			while (wallPositions.size() == 0);
@@ -2202,6 +2199,8 @@ int main(int argc, char* argv[])
 		mainShader.setBool("useShadows", useShadows);
 		if (gameScreen) 
 		{
+
+			mainShader.setBool("useTextures", true);
 			// Wall display
 			glBindVertexArray(cubeVao);
 			glActiveTexture(GL_TEXTURE2);
@@ -2214,7 +2213,7 @@ int main(int argc, char* argv[])
 			glBindTexture(GL_TEXTURE_2D, metalTextureID);
 			glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
 			displayShape(mainShader);
-
+			mainShader.setBool("useTextures", false);
 			// Model display
 			glBindVertexArray(modelVAO);
 			displayModel(mainShader, verticesCount);
