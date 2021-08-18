@@ -12,6 +12,7 @@ uniform sampler2D shadowMap;
 uniform bool useTextures;
 uniform sampler2D ourTexture;
 uniform sampler2D bloomTexture;
+uniform float ambientStrength;
 out vec4 FragColor;
 
 float shadowScalar(vec3 lightDir) 
@@ -35,15 +36,16 @@ void main()
     vec3 lightColor = vec3(1.0f, 1.0f, 1.0f); //Can modify for different lighting but assignment asks for white. 
 
     //ambient 
-    float ambientStrength = 0.8f; //Can modify for different effects.
+   float ambientStrength = 0.4f; //Can modify for different effects.
     vec3 ambient = lightColor * ambientStrength;
 
-
+	vec3 directionLight = normalize(vec3(0.0f, 0.0f, 10.0f));
 
     //diffuse
     vec3 norm = normalize(Normal);
-    vec3 lightPos = vec3 (0.0f, 30.0*gridUnitLength, 0.0f);
-    vec3 lightDir = normalize(lightPos - FragPos);
+  
+ 
+	vec3 lightDir = normalize(vec3(0.0f, 0.0f, 1.0f));
     float diff = max(dot(norm, lightDir), 0.0);
 
     float shadowScalar = shadowScalar(lightDir);
