@@ -26,7 +26,7 @@ float shapeMovement = 0.0f;
 float wallMovement = 0.0f;
 double totalTime = 120.0; //Change this to change time of game play (in seconds).
 glm::vec3 direction;
-
+glm::vec3 lightPosition(0.0f, 0.0f, -10.0f);
 // Camera parameters
 glm::mat4 view;
 glm::mat4 projection;
@@ -59,7 +59,7 @@ int rotations[1000];
 float rotationHelp[1000];
 int numberOfRotations = 0;
 int minChecked = 0;
-
+int verticesCount = 100;
 
 // Stores rendering modes, default is triangles
 GLenum renderModeShape = GL_TRIANGLES;
@@ -1169,18 +1169,26 @@ GLuint buildDepthMapFrameBuffer()
 	return depthMapFBO;
 }
 
-void calculateShadows(Shader shadowShader, Shader mainShader, GLuint depthMapFBO, GLuint vao, GLFWwindow* window)
+void calculateShadows(glm::vec3 lightPosition,Shader shadowShader, Shader mainShader, GLuint depthMapFBO, GLuint vao, GLFWwindow* window)
 {
-	glm::vec3 lightPosition(0.0, 30.0f * gridUnitLength, 0.0);
-	glm::vec3 lightFocus(0.0, 0.0, 0.0);
+	
+	/*glm::vec3 lightFocus(0.0, 0.0, -50.0);
 	glm::vec3 lightDirection = glm::normalize(lightFocus - lightPosition);
 
 	glm::mat4 lightProjectionMatrix = glm::perspective(65.0f, 1.0f, 0.01f, 100.0f);
 	glm::mat4 lightViewMatrix = glm::lookAt(lightPosition, lightPosition + lightDirection, glm::vec3(0.0f, 0.0f, 1.0f));
-	glm::mat4 lightSpaceMatrix = lightProjectionMatrix * lightViewMatrix;
+	glm::mat4 lightSpaceMatrix = lightProjectionMatrix * lightViewMatrix;*/
+
+	glm::mat4 lightProjectionMatrix = glm::ortho<float>(-10, 10, -10, 10, -10, 20);
+	glm::mat4 lightViewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f,0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 lightSpaceMatrix = lightProjectionMatrix * lightViewMatrix; 
+
 
 	glm::mat4 model = glm::mat4(1.0);
-	model = glm::translate(model, glm::vec3(0.0, 30.0f * gridUnitLength, 0.0));
+	model = glm::translate(model, glm::vec3(0.0, 0.0, 0.0));
+
+
+
 
 	mainShader.use();
 	mainShader.setMat4("lightMatrix", lightSpaceMatrix);
@@ -1197,7 +1205,7 @@ void calculateShadows(Shader shadowShader, Shader mainShader, GLuint depthMapFBO
 
 	displayWall(shadowShader);
 	displayShape(shadowShader);
-
+	displayModel(mainShader, verticesCount);
 	int width, height;
 	glfwGetFramebufferSize(window, &width, &height);
 	glViewport(0, 0, width, height);
@@ -2022,11 +2030,12 @@ int main(int argc, char* argv[])
 	mainShader.use();
 	mainShader.setFloat("gridUnitLength", gridUnitLength);
 	mainShader.setBool("useTextures", useTextures);
+	mainShader.setVec3("lightPos", glm::vec3(0.0f, 0.0f, 0.0f));
 
 	// Creates array and buffer objects
 	GLuint cubeVao = createCubeVao();
     GLuint depthMapFBO = buildDepthMapFrameBuffer();
-	int verticesCount;
+	
 	GLuint modelVAO = setupModelVBO("../Assets/Models/aircraft.obj", verticesCount);
 
 	// Shape and wall randomization
@@ -2048,6 +2057,9 @@ int main(int argc, char* argv[])
 	// Entering Main Loop
 	while (!glfwWindowShouldClose(window))
 	{
+
+
+
 		if (gameScreen && startGame) {
 			startTime = clock();
 			startGame = false;
@@ -2110,7 +2122,7 @@ int main(int argc, char* argv[])
 		
 		// Shadows
 		mainShader.setBool("useTextures", false);
-		calculateShadows(shadowShader, mainShader, depthMapFBO, cubeVao, window);
+		calculateShadows(glm::vec3(-2.0f, 0.0f, 2.0 - shapeMovement * 0.07), shadowShader, mainShader, depthMapFBO, cubeVao, window);
 
 		if (gameScreen && !levelBeaten) {
 			glm::mat4 modelCheck = glm::mat4(1.0f);
@@ -2197,10 +2209,12 @@ int main(int argc, char* argv[])
 		mainShader.setVec3("viewPos", cameraPos);
 		mainShader.setBool("useTextures", useTextures);
 		mainShader.setBool("useShadows", useShadows);
+		
 		if (gameScreen) 
 		{
 
 			mainShader.setBool("useTextures", true);
+			mainShader.setBool("useShadows", true);
 			// Wall display
 			glBindVertexArray(cubeVao);
 			glActiveTexture(GL_TEXTURE2);
@@ -2214,6 +2228,7 @@ int main(int argc, char* argv[])
 			glUniform1i(glGetUniformLocation(mainShader.ID, "ourTexture"), 2);
 			displayShape(mainShader);
 			mainShader.setBool("useTextures", false);
+
 			// Model display
 			glBindVertexArray(modelVAO);
 			displayModel(mainShader, verticesCount);
@@ -2221,6 +2236,7 @@ int main(int argc, char* argv[])
 		mainShader.setBool("useTextures", true);
 
 		//Skybox display
+		mainShader.setBool("useShadows", true); //CHANGE THIS FOR SKYBOX SHADOWS ON/OFF
 		glBindVertexArray(cubeVao);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
