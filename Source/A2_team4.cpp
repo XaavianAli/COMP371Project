@@ -11,7 +11,6 @@
 #include <filesystem>
 #include <vector>
 
-
 #include "shader.h"
 #include "../Source/OBJloader.h"  //For loading .obj files
 #define STB_IMAGE_IMPLEMENTATION
@@ -1280,7 +1279,7 @@ void processInput(GLFWwindow* window)
 	if (aPressed && glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE)
 	{
 		aPressed = false;
-		rotations[numberOfRotations] = 0;
+		rotations[numberOfRotations] = 2;
 		numberOfRotations++;
 	}
 
@@ -1290,7 +1289,7 @@ void processInput(GLFWwindow* window)
 	if (dPressed && glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE)
 	{
 		dPressed = false;
-		rotations[numberOfRotations] = 1;
+		rotations[numberOfRotations] = 3;
 		numberOfRotations++;
 	}
 
@@ -1300,7 +1299,7 @@ void processInput(GLFWwindow* window)
 	if (wPressed && glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE)
 	{
 		wPressed = false;
-		rotations[numberOfRotations] = 2;
+		rotations[numberOfRotations] = 1;
 		numberOfRotations++;
 	}
 
@@ -1310,7 +1309,7 @@ void processInput(GLFWwindow* window)
 	if (sPressed && glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE)
 	{
 		sPressed = false;
-		rotations[numberOfRotations] = 3;
+		rotations[numberOfRotations] = 0;
 		numberOfRotations++;
 	}
 
