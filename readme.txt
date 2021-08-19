@@ -6,7 +6,7 @@ This game requires OpenGL, GLEW, GLFW libraries.
 
 Windows: This folder contains a VS project which should allow you to run the program without any modifications.
 
-Linux: Compile the source code from the Source directory using: g++ stb_image.h shader.h irrKlang/irrKlang.h A2_team4.cpp -L../Bin -lIrrKlang -Wl,-R../Bin $(pkg-config glfw3 glew --cflags --libs) -o SuperHyperCube.out
+Linux: Compile the source code from the Source directory using: g++ stb_image.h shader.h OBJloader.h irrKlang/irrKlang.h Mesh.cpp A2_team4.cpp -L../Bin -lIrrKlang -Wl,-R../Bin $(pkg-config glfw3 glew --cflags --libs) -o SuperHyperCube.out
 
 Controls:
 
