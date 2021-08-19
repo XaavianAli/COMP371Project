@@ -23,8 +23,10 @@ The lighting and shadows were based off of the tutorials provided at https://lea
 
 IrrKlang sound library version 1.6.0 used for sound effects in game
 
+Assimp library used for 3D model importing
+
 The cube vao was based off the code provided for the labs of this class. 
 The method for loading textures was also provided from the labs.
 
-Team 5:
-Donovan, Julien, Ryan, Xaavian, David
+Team 4:
+Donovan Upsdell, Julien Picard, Ryan Feher, Xaavian Ali, David Kim
