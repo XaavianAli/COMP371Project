@@ -5,10 +5,16 @@ in vec2 texCoord;
 
 out vec4 FragColor;
 
+uniform bool titlebool;
+
 uniform sampler2D font;
+uniform sampler2D title;
 
 void main()
 {
-   FragColor = texture(font, texCoord);
-   //FragColor = texture(font, texCoord) * vec4(vertexColor.r, vertexColor.g, vertexColor.b, vertexColor.a);
+   if(titlebool){
+      FragColor = texture(title, texCoord);
+   }else{
+      FragColor = texture(font, texCoord);
+   }
 }

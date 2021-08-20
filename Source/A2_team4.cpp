@@ -52,6 +52,7 @@ bool endScreen = false;
 double currentTime;
 double deltaTime2;
 double timeLeft;
+bool titlebool = false;
 
 
 int rotations[1000];
@@ -95,6 +96,7 @@ GLuint skyboxLeft;
 GLuint skyboxRight;
 GLuint skyboxTop;
 GLuint font;
+GLuint title;
 
 // Shape transformations
 float translateShapeX = 0.0f;
@@ -1565,6 +1567,86 @@ GLuint setupModelVBO(std::string path, int& vertexCount)
 	return VAO;
 }
 
+GLuint createTitleVao()
+{
+	// A vertex is a point on a polygon, it contains positions and other data (eg: colors)
+	float vertexArray[] = {
+		-0.5f,  0.3f,  1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.5f,
+		 0.5f,  0.3f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  0.5f,
+		-0.5f,  0.8f,  1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f,
+		 0.5f,  0.3f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  0.5f,
+		 0.5f,  0.8f,  1.0f,  1.0f,  1.0f,  1.0f,  1.0f,  0.0f,
+		-0.5f,  0.8f,  1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f,
+	};
+
+	// Create a vertex array
+	GLuint vertexArrayObject;
+	glGenVertexArrays(1, &vertexArrayObject);
+	glBindVertexArray(vertexArrayObject);
+
+	// Upload Vertex Buffer to the GPU, keep a reference to it (vertexBufferObject)
+	GLuint vertexBufferObject;
+	glGenBuffers(1, &vertexBufferObject);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexArray), vertexArray, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0,                   // attribute 0 matches aPos in Vertex Shader
+		2,                   // size
+		GL_FLOAT,            // type
+		GL_FALSE,            // normalized?
+		8 * sizeof(float), // stride - each vertex contain 2 vec3 (position, color)
+		(void*)0             // array buffer offset
+	);
+	glEnableVertexAttribArray(0);
+
+
+	glVertexAttribPointer(1,                            // attribute 1 matches aColor in Vertex Shader
+		4,
+		GL_FLOAT,
+		GL_FALSE,
+		8 * sizeof(float),
+		(void*)(sizeof(float) * 2)      // color is offseted a vec3 (comes after position)
+	);
+	glEnableVertexAttribArray(1);
+
+	glVertexAttribPointer(2,                            // attribute 1 matches aColor in Vertex Shader
+		2,
+		GL_FLOAT,
+		GL_FALSE,
+		8 * sizeof(float),
+		(void*)(sizeof(float) * 6)      // color is offseted a vec3 (comes after position)
+	);
+	glEnableVertexAttribArray(2);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	return vertexArrayObject;
+}
+
+void displayTitle(Shader shader){
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, title);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glUniform1i(glGetUniformLocation(shader.ID, "title"), 2);
+
+	//Compatibility for text shader :)
+	glm::vec3 model = glm::vec3(0.0f, 0.0f, 0.0f);
+	shader.setVec3("model", model);
+	shader.setBool("titlebool", true);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	shader.setBool("titlebool", false);
+
+}
+
 GLuint createTextVao(float x1, float y1, float x2, float y2, float s)
 {
 	// A vertex is a point on a polygon, it contains positions and other data (eg: colors)
@@ -1997,6 +2079,7 @@ int main(int argc, char* argv[])
 	skyboxRight = loadTexture("Textures/SkyboxRight.png");
 	skyboxTop = loadTexture("Textures/SkyboxTop.png");
 	font = loadTexture("Textures/font.png");
+	title = loadTexture("Textures/title.png"); 
 #else
 	brickTextureID = loadTexture("../Assets/Textures/brick.jpg");
 	metalTextureID = loadTexture("../Assets/Textures/metal.jpg");
@@ -2008,6 +2091,7 @@ int main(int argc, char* argv[])
 	skyboxRight = loadTexture("../Assets/Textures/SkyboxRight.png");
 	skyboxTop = loadTexture("../Assets/Textures/SkyboxTop.png");
 	font = loadTexture("../Assets/Textures/font.png");
+	title = loadTexture("../Assets/Textures/title.png");
 #endif
 
 	// Black background
@@ -2034,7 +2118,7 @@ int main(int argc, char* argv[])
 	// Creates array and buffer objects
 	GLuint cubeVao = createCubeVao();
     GLuint depthMapFBO = buildDepthMapFrameBuffer();
-	
+	GLuint titleVao = createTitleVao();
 	GLuint modelVAO = setupModelVBO("../Assets/Models/aircraft.obj", verticesCount);
 
 	// Shape and wall randomization
@@ -2255,7 +2339,11 @@ int main(int argc, char* argv[])
 			displayText(textShader, timeLeftChar, glm::vec2(0.5f, 0.8f), 0.4);
 		}
 		if (startScreen) {
-			displayText(textShader, "Press ENTER to start", glm::vec2(-0.8f, 0.0f), 0.4);
+			//Displaying title too because using text shader as a shortcut :)
+			glBindVertexArray(titleVao);
+			displayTitle(textShader);
+			displayText(textShader, "Press ENTER to start", glm::vec2(-0.75f, 0.0f), 0.4);
+			displayText(textShader, "Made by Team DDXJR", glm::vec2(-0.4f, -0.9f), 0.25);
 			
 		}
 		if (endScreen) {
