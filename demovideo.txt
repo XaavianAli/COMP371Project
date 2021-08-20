@@ -1,0 +1,6 @@
+The demo video can be found at the link below. 
+
+https://youtu.be/WNsV9JN3dK8
+
+Do note, as the video is recorded at 30hz, some of the details may not be as clear as when the game is actually running.
+Notably, this most shows if the shape aligns correctly just before it passes through the wall, as the shape speeds up when correctly aligned.

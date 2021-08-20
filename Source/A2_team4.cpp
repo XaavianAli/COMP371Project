@@ -2033,6 +2033,9 @@ int main(int argc, char* argv[])
 {
 	// Initialize GLFW and OpenGL version
 	glfwInit();
+	
+	// Seed Random Number Generation
+	srand(time(0));
 
 #if defined(PLATFORM_OSX)	
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
