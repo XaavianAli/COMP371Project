@@ -36,7 +36,7 @@ void main()
     vec3 lightColor = vec3(1.0f, 1.0f, 1.0f); //Can modify for different lighting but assignment asks for white. 
 
     //ambient 
-   float ambientStrength = 0.4f; //Can modify for different effects.
+   float ambientStrength = 0.7f; //Can modify for different effects.
     vec3 ambient = lightColor * ambientStrength;
 
 	vec3 directionLight = normalize(vec3(0.0f, 0.0f, 10.0f));
